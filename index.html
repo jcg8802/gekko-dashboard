@@ -594,6 +594,7 @@ section{margin-bottom:32px}
 .layer-sector{background:rgba(243,156,18,0.2);color:#f39c12;border:1px solid rgba(243,156,18,0.3)}
 .layer-superinvestor{background:rgba(155,89,182,0.2);color:#9b59b6;border:1px solid rgba(155,89,182,0.3)}
 .layer-decision{background:rgba(0,255,136,0.12);color:var(--green);border:1px solid rgba(0,255,136,0.3)}
+.mobile-sharpe{display:none}
 .sharpe-col{display:flex;flex-direction:column;gap:4px}
 .sharpe-bar-outer{
   height:8px;
@@ -990,20 +991,26 @@ section{margin-bottom:32px}
   /* Charts shorter */
   .chart-container{height:200px}
 
-  /* Agent leaderboard — compact: rank + avatar + name + sharpe only */
+  /* Agent leaderboard — compact on mobile: rank + avatar + info(name+layer+sharpe) only */
   .agent-row{
-    grid-template-columns:28px 36px 1fr 90px;
+    grid-template-columns:28px 36px 1fr;
     gap:8px;
     padding:10px 12px;
     min-height:44px;
   }
-  .agent-row .weight-badge,
+  .agent-row .desktop-sharpe-num,
+  .agent-row .weight-col,
   .agent-row .xp-col,
   .agent-row .sparkline-col,
   .agent-row .status-dot,
-  .agent-row .sharpe-col{display:none}
-  /* Restore sharpe inline as a small badge */
-  .agent-row .sharpe-val{display:block;font-size:13px}
+  .agent-row .sharpe-col{display:none!important}
+  /* Show sharpe inline in agent-info */
+  .mobile-sharpe{display:inline-block!important;font-family:var(--font-mono);font-size:11px;font-weight:700}
+  .mobile-sharpe.pos{color:var(--green)}
+  .mobile-sharpe.neg{color:var(--red)}
+  .mobile-sharpe.zero{color:var(--dim)}
+  .agent-name{white-space:normal;word-break:break-word;font-size:11px;letter-spacing:0.5px}
+  .layer-badge{font-size:7px}
   .sort-tabs{flex-wrap:wrap;width:100%}
   .sort-tab{flex:1;text-align:center;padding:8px 6px;min-height:44px;display:flex;align-items:center;justify-content:center}
 
@@ -1849,9 +1856,12 @@ function renderLeaderboard(){
       <div class="agent-avatar" style="background:${a.color}22;border-color:${a.color}44">${a.initials}</div>
       <div class="agent-info">
         <div class="agent-name ${isTop3?'top3':''}">${a.name}</div>
-        <div><span class="layer-badge ${layerBadgeClass}">${a.layer}</span></div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="layer-badge ${layerBadgeClass}">${a.layer}</span>
+          <span class="mobile-sharpe ${sharpeClass}">${sharpeStr}</span>
+        </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
+      <div class="desktop-sharpe-num">
         <div class="sharpe-val ${sharpeClass}">${sharpeStr}</div>
         <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:1px;color:var(--dim)">SHARPE</div>
       </div>
@@ -1861,7 +1871,7 @@ function renderLeaderboard(){
           <div class="sharpe-bar-fill ${sharpeClass}" style="width:${sharpePct}%"></div>
         </div>
       </div>
-      <div><div class="weight-badge ${wClass}">${a.weight.toFixed(2)}x</div></div>
+      <div class="weight-col"><div class="weight-badge ${wClass}">${a.weight.toFixed(2)}x</div></div>
       <div class="xp-col">
         <div class="xp-label ${lv.cls}">${lv.label}</div>
         <div class="xp-bar-outer"><div class="xp-bar-inner ${lv.cls}" style="width:${lv.pct}%"></div></div>
