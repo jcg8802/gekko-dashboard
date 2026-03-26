@@ -1,2035 +1,1866 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GEKKO — AI Trading Intelligence</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    :root {
-      --bg: #0a0a0a;
-      --bg2: #111111;
-      --bg3: #1a1a1a;
-      --bg4: #222222;
-      --border: #2a2a2a;
-      --green: #00ff88;
-      --green-dim: #00cc6a;
-      --green-bg: rgba(0,255,136,0.07);
-      --red: #ff4444;
-      --red-dim: #cc2222;
-      --red-bg: rgba(255,68,68,0.07);
-      --yellow: #ffcc00;
-      --yellow-dim: #cc9900;
-      --yellow-bg: rgba(255,204,0,0.07);
-      --blue: #4488ff;
-      --text: #e8e8e8;
-      --text-dim: #888;
-      --text-dimmer: #555;
-      --mono: 'JetBrains Mono', monospace;
-      --sans: 'Inter', sans-serif;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEKKO · 25-AGENT TRADING INTELLIGENCE</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ─── RESET & ROOT ─── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050508;
+  --card:#0d0d14;
+  --border:#1a1a2e;
+  --green:#00ff88;
+  --green-dim:rgba(0,255,136,0.15);
+  --green-glow:0 0 8px #00ff88,0 0 20px rgba(0,255,136,0.4);
+  --red:#ff3355;
+  --red-dim:rgba(255,51,85,0.15);
+  --red-glow:0 0 8px #ff3355,0 0 20px rgba(255,51,85,0.4);
+  --warn:#ffaa00;
+  --warn-dim:rgba(255,170,0,0.15);
+  --gold:#ffd700;
+  --purple:#9b59b6;
+  --blue:#3498db;
+  --orange:#f39c12;
+  --text:#e8e8e8;
+  --dim:#666;
+  --font-mono:'JetBrains Mono',monospace;
+  --font-sans:'Inter',sans-serif;
+}
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html{scroll-behavior:smooth}
+body{
+  background-color:var(--bg);
+  color:var(--text);
+  font-family:var(--font-sans);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+}
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 14px;
-      line-height: 1.6;
-      min-height: 100vh;
-    }
+/* Scanline + grid texture */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,136,0.015) 2px,rgba(0,255,136,0.015) 4px),
+    repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(0,255,136,0.02) 40px,rgba(0,255,136,0.02) 41px),
+    repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(0,255,136,0.02) 40px,rgba(0,255,136,0.02) 41px);
+  pointer-events:none;
+  z-index:0;
+}
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 4px);
+  pointer-events:none;
+  z-index:0;
+  animation:scanlines 8s linear infinite;
+}
+@keyframes scanlines{0%{background-position:0 0}100%{background-position:0 100px}}
 
-    /* ── SCROLLBAR ── */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+/* ─── LAYOUT ─── */
+.container{max-width:1600px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+section{margin-bottom:32px}
+.section-label{
+  font-family:var(--font-mono);
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:4px;
+  color:var(--dim);
+  text-transform:uppercase;
+  margin-bottom:16px;
+  padding-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
 
-    /* ── LAYOUT ── */
-    .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+/* ─── CARDS ─── */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:20px;
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border),transparent);
+}
 
-    /* ── HEADER ── */
-    .header {
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      padding: 20px 0;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(10px);
-    }
-    .header-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .logo {
-      font-family: var(--mono);
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      color: var(--green);
-      text-shadow: 0 0 30px rgba(0,255,136,0.4);
-    }
-    .logo span { color: var(--text-dim); font-size: 13px; letter-spacing: 0.05em; font-weight: 400; display: block; margin-top: -4px; }
-    .header-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-    .header-date { font-family: var(--mono); font-size: 13px; color: var(--text-dim); }
-    .regime-badge {
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      padding: 6px 14px;
-      border-radius: 4px;
-      border: 1px solid;
-    }
-    .regime-badge.risk-off { color: var(--red); border-color: var(--red); background: var(--red-bg); }
-    .regime-badge.risk-on { color: var(--green); border-color: var(--green); background: var(--green-bg); }
-    .regime-badge.neutral { color: var(--yellow); border-color: var(--yellow); background: var(--yellow-bg); }
-    .live-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 8px var(--green);
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+/* ─── ANIMATIONS ─── */
+@keyframes pulse-ring{
+  0%{transform:scale(0.8);opacity:1}
+  100%{transform:scale(2.5);opacity:0}
+}
+@keyframes pulse-dot{
+  0%,100%{opacity:1}
+  50%{opacity:0.4}
+}
+@keyframes glow-text{
+  0%,100%{text-shadow:var(--green-glow)}
+  50%{text-shadow:0 0 4px var(--green),0 0 10px rgba(0,255,136,0.2)}
+}
+@keyframes glow-red{
+  0%,100%{text-shadow:var(--red-glow)}
+  50%{text-shadow:0 0 4px var(--red),0 0 10px rgba(255,51,85,0.2)}
+}
+@keyframes marquee{
+  0%{transform:translateX(0)}
+  100%{transform:translateX(-50%)}
+}
+@keyframes shimmer{
+  0%{background-position:200% center}
+  100%{background-position:-200% center}
+}
+@keyframes border-pulse-green{
+  0%,100%{box-shadow:0 0 0 1px rgba(0,255,136,0.3),inset 0 0 20px rgba(0,255,136,0.02)}
+  50%{box-shadow:0 0 0 1px rgba(0,255,136,0.7),inset 0 0 30px rgba(0,255,136,0.05)}
+}
+@keyframes border-pulse-red{
+  0%,100%{box-shadow:0 0 0 1px rgba(255,51,85,0.3)}
+  50%{box-shadow:0 0 0 1px rgba(255,51,85,0.7)}
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-    /* ── SECTION ── */
-    .section { padding: 40px 0; border-bottom: 1px solid var(--border); }
-    .section:last-child { border-bottom: none; }
-    .section-title {
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.2em;
-      color: var(--text-dimmer);
-      text-transform: uppercase;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
+/* ─── HEADER ─── */
+.header{
+  padding:28px 24px 24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid var(--border);
+  position:relative;
+  z-index:1;
+  background:linear-gradient(180deg,rgba(0,255,136,0.03) 0%,transparent 100%);
+}
+.header-left{}
+.gekko-logo{
+  font-family:var(--font-mono);
+  font-size:clamp(36px,5vw,64px);
+  font-weight:800;
+  letter-spacing:0.4em;
+  color:var(--green);
+  animation:glow-text 3s ease-in-out infinite;
+  line-height:1;
+  margin-bottom:8px;
+}
+.header-sub{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:3px;
+  color:var(--dim);
+  text-transform:uppercase;
+}
+.header-right{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:12px;
+}
+.live-clock{
+  font-family:var(--font-mono);
+  font-size:22px;
+  font-weight:600;
+  color:var(--text);
+  letter-spacing:2px;
+}
+.regime-badge{
+  font-family:var(--font-mono);
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:3px;
+  padding:10px 24px;
+  border-radius:2px;
+  text-transform:uppercase;
+}
+.regime-badge.risk-off{
+  background:rgba(255,51,85,0.12);
+  border:1px solid var(--red);
+  color:var(--red);
+  animation:glow-red 2s ease-in-out infinite;
+}
+.regime-badge.risk-on{
+  background:rgba(0,255,136,0.12);
+  border:1px solid var(--green);
+  color:var(--green);
+  animation:glow-text 2s ease-in-out infinite;
+}
+.regime-badge.transitional{
+  background:rgba(255,170,0,0.12);
+  border:1px solid var(--warn);
+  color:var(--warn);
+}
 
-    /* ── REGIME GAUGE ── */
-    .regime-gauge-wrap {
-      display: flex;
-      align-items: center;
-      gap: 48px;
-      flex-wrap: wrap;
-    }
-    .gauge-visual {
-      position: relative;
-      width: 220px;
-      height: 120px;
-      flex-shrink: 0;
-    }
-    .gauge-arc {
-      width: 220px;
-      height: 110px;
-      overflow: hidden;
-    }
-    .gauge-ring {
-      position: relative;
-      width: 220px;
-      height: 220px;
-      border-radius: 110px 110px 0 0;
-      background: conic-gradient(from 180deg,
-        var(--green) 0deg 60deg,
-        var(--yellow) 60deg 120deg,
-        var(--red) 120deg 180deg
-      );
-      mask: radial-gradient(circle at center, transparent 70px, black 71px, black 110px);
-      -webkit-mask: radial-gradient(circle at center, transparent 70px, black 71px, black 110px);
-    }
-    .gauge-needle {
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform-origin: bottom center;
-      width: 3px;
-      height: 80px;
-      background: var(--text);
-      border-radius: 2px 2px 0 0;
-      box-shadow: 0 0 6px rgba(255,255,255,0.4);
-    }
-    .gauge-center {
-      position: absolute;
-      bottom: -4px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      background: var(--text);
-      box-shadow: 0 0 8px rgba(255,255,255,0.5);
-    }
-    .gauge-labels {
-      display: flex;
-      justify-content: space-between;
-      padding: 0 4px;
-      margin-top: -2px;
-    }
-    .gauge-labels span { font-family: var(--mono); font-size: 9px; color: var(--text-dimmer); }
-    .gauge-info { flex: 1; min-width: 220px; }
-    .gauge-regime-name {
-      font-family: var(--mono);
-      font-size: 32px;
-      font-weight: 700;
-      line-height: 1.1;
-      margin-bottom: 8px;
-    }
-    .gauge-confidence {
-      font-family: var(--mono);
-      font-size: 14px;
-      color: var(--text-dim);
-      margin-bottom: 16px;
-    }
-    .confidence-bar-wrap { width: 280px; margin-bottom: 12px; }
-    .confidence-bar-track { height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
-    .confidence-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
-    .gauge-driver {
-      font-size: 13px;
-      color: var(--text-dim);
-      max-width: 500px;
-      line-height: 1.5;
-    }
-    .gauge-driver strong { color: var(--text); }
+/* ─── REGIME COMMAND CENTER ─── */
+.regime-center{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  gap:0;
+  min-height:220px;
+  border:1px solid var(--border);
+  border-radius:4px;
+  overflow:hidden;
+  animation:border-pulse-red 3s ease-in-out infinite;
+}
+.regime-panel{
+  padding:32px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.regime-panel-left{text-align:left}
+.regime-panel-center{
+  padding:32px 40px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border-left:1px solid var(--border);
+  border-right:1px solid var(--border);
+  background:rgba(255,51,85,0.03);
+}
+.regime-panel-right{text-align:left}
+.regime-word{
+  font-family:var(--font-mono);
+  font-size:clamp(28px,4vw,56px);
+  font-weight:800;
+  letter-spacing:0.1em;
+  line-height:1;
+}
+.regime-word.red{color:var(--red);text-shadow:var(--red-glow)}
+.regime-word.green{color:var(--green);text-shadow:var(--green-glow)}
+.regime-confidence{
+  font-family:var(--font-mono);
+  font-size:13px;
+  color:var(--dim);
+  margin-top:12px;
+  letter-spacing:2px;
+}
+.regime-confidence span{color:var(--red);font-weight:700;font-size:18px}
+.regime-label{
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:3px;
+  color:var(--dim);
+  text-transform:uppercase;
+  margin-bottom:16px;
+}
+.pulse-container{
+  position:relative;
+  width:120px;height:120px;
+  display:flex;align-items:center;justify-content:center;
+}
+.pulse-ring{
+  position:absolute;
+  width:100%;height:100%;
+  border-radius:50%;
+  border:2px solid var(--red);
+  animation:pulse-ring 2s ease-out infinite;
+}
+.pulse-ring:nth-child(2){animation-delay:0.7s}
+.pulse-ring:nth-child(3){animation-delay:1.4s}
+.pulse-dot{
+  width:24px;height:24px;
+  border-radius:50%;
+  background:var(--red);
+  box-shadow:0 0 20px var(--red);
+  animation:pulse-dot 2s ease-in-out infinite;
+  z-index:1;
+}
+.pulse-container.green .pulse-ring{border-color:var(--green)}
+.pulse-container.green .pulse-dot{background:var(--green);box-shadow:0 0 20px var(--green)}
+.macro-driver{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:12px;
+  padding:10px 12px;
+  background:rgba(255,51,85,0.05);
+  border-left:2px solid var(--red);
+  border-radius:0 2px 2px 0;
+}
+.macro-driver-icon{color:var(--red);font-size:14px;flex-shrink:0;margin-top:1px}
+.macro-driver-text{font-size:12px;color:var(--text);line-height:1.5}
 
-    /* ── METRICS BAR ── */
-    .metrics-bar {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .metric-cell {
-      background: var(--bg2);
-      padding: 20px 24px;
-      position: relative;
-    }
-    .metric-cell:hover { background: var(--bg3); }
-    .metric-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.15em;
-      color: var(--text-dimmer);
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .metric-value {
-      font-family: var(--mono);
-      font-size: 26px;
-      font-weight: 700;
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-    .metric-change {
-      font-family: var(--mono);
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .metric-change.up { color: var(--green); }
-    .metric-change.down { color: var(--red); }
-    .metric-change.flat { color: var(--text-dim); }
-    .arrow-up::before { content: '▲'; }
-    .arrow-down::before { content: '▼'; }
-    .arrow-flat::before { content: '●'; }
+/* ─── TICKER ─── */
+.ticker-bar{
+  background:rgba(0,0,0,0.6);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  overflow:hidden;
+  height:48px;
+  display:flex;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+.ticker-inner{
+  display:flex;
+  align-items:center;
+  white-space:nowrap;
+  animation:marquee 30s linear infinite;
+}
+.ticker-item{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:0 32px;
+  font-family:var(--font-mono);
+  font-size:13px;
+  border-right:1px solid var(--border);
+}
+.ticker-sym{color:var(--text);font-weight:700;letter-spacing:1px}
+.ticker-val{color:var(--text);font-weight:600}
+.ticker-chg{font-weight:600;font-size:12px}
+.ticker-chg.up{color:var(--green)}
+.ticker-chg.down{color:var(--red)}
+.ticker-sep{color:var(--border);font-size:20px;padding:0 16px}
 
-    /* ── CARDS GRID ── */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 16px;
-    }
-    .pick-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 20px;
-      transition: border-color 0.2s, transform 0.2s;
-      position: relative;
-      overflow: hidden;
-    }
-    .pick-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-    }
-    .pick-card.long::before { background: var(--green); }
-    .pick-card.short::before { background: var(--red); }
-    .pick-card:hover { border-color: #444; transform: translateY(-2px); }
-    .card-ticker {
-      font-family: var(--mono);
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    .card-ticker.long { color: var(--green); }
-    .card-ticker.short { color: var(--red); }
-    .card-direction {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.15em;
-      margin-bottom: 12px;
-    }
-    .card-direction.long { color: var(--green-dim); }
-    .card-direction.short { color: var(--red-dim); }
-    .conviction-bar-wrap { margin-bottom: 12px; }
-    .conviction-label {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 5px;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-dim);
-    }
-    .conviction-track { height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
-    .conviction-fill { height: 100%; border-radius: 2px; }
-    .conviction-fill.long { background: var(--green); }
-    .conviction-fill.short { background: var(--red); }
-    .card-thesis {
-      font-size: 12px;
-      color: var(--text-dim);
-      line-height: 1.5;
-    }
-    .card-source {
-      margin-top: 10px;
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--text-dimmer);
-      border-top: 1px solid var(--border);
-      padding-top: 8px;
-    }
-    .cro-flag {
-      margin-top: 8px;
-      background: rgba(255,204,0,0.1);
-      border: 1px solid rgba(255,204,0,0.3);
-      border-radius: 4px;
-      padding: 6px 10px;
-      font-size: 11px;
-      color: var(--yellow);
-    }
-    .sizing-badge {
-      display: inline-block;
-      background: var(--bg4);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 2px 8px;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-dim);
-      margin-left: 8px;
-    }
+/* ─── POSITIONS ─── */
+.positions-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.positions-col-header{
+  font-family:var(--font-mono);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:4px;
+  padding:10px 16px;
+  border-radius:2px;
+  margin-bottom:12px;
+  text-align:center;
+}
+.positions-col-header.longs{
+  background:rgba(0,255,136,0.08);
+  border:1px solid rgba(0,255,136,0.3);
+  color:var(--green);
+}
+.positions-col-header.shorts{
+  background:rgba(255,51,85,0.08);
+  border:1px solid rgba(255,51,85,0.3);
+  color:var(--red);
+}
+.position-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:16px;
+  margin-bottom:12px;
+  transition:border-color 0.2s;
+}
+.position-card.long{border-left:3px solid var(--green)}
+.position-card.short{border-left:3px solid var(--red)}
+.position-card:hover{border-color:rgba(255,255,255,0.15)}
+.position-ticker{
+  font-family:var(--font-mono);
+  font-size:28px;
+  font-weight:800;
+  letter-spacing:2px;
+  line-height:1;
+  margin-bottom:4px;
+}
+.position-card.long .position-ticker{
+  color:var(--green);
+  text-shadow:0 0 12px rgba(0,255,136,0.5);
+}
+.position-card.short .position-ticker{
+  color:var(--red);
+  text-shadow:0 0 12px rgba(255,51,85,0.5);
+}
+.conviction-bar-wrap{margin:10px 0;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+.conviction-bar{
+  height:100%;
+  border-radius:3px;
+  transition:width 1s ease-out;
+  position:relative;
+  overflow:hidden;
+}
+.conviction-bar::after{
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+  animation:shimmer 2s linear infinite;
+  background-size:200% auto;
+}
+.position-card.long .conviction-bar{background:linear-gradient(90deg,#00cc6a,var(--green))}
+.position-card.short .conviction-bar{background:linear-gradient(90deg,#cc2244,var(--red))}
+.conviction-pct{
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--dim);
+  margin-bottom:8px;
+}
+.position-thesis{
+  font-size:12px;
+  color:rgba(232,232,232,0.75);
+  line-height:1.5;
+  margin-bottom:8px;
+  font-style:italic;
+}
+.position-prices{
+  display:flex;
+  gap:16px;
+  margin-bottom:8px;
+}
+.position-price-item{font-family:var(--font-mono);font-size:11px;color:var(--dim)}
+.position-price-item span{color:var(--text);font-weight:600}
+.agent-icons{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.agent-icon{
+  width:22px;height:22px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);
+  font-size:8px;
+  font-weight:700;
+  color:#fff;
+  flex-shrink:0;
+}
 
-    /* ── CHARTS ── */
-    .chart-wrap {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 24px;
-    }
-    .chart-title {
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-dim);
-      margin-bottom: 20px;
-      letter-spacing: 0.05em;
-    }
-    .chart-container { position: relative; }
+/* ─── SOURCE PILLS ─── */
+.source-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.source-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 7px;
+  background:#0f0f1a;
+  border:1px solid #252540;
+  border-radius:10px;
+  font-family:var(--font-mono);
+  font-size:9px;
+  color:#666;
+  text-decoration:none;
+  transition:all 0.15s;
+  cursor:pointer;
+}
+.source-pill:hover{
+  background:#1a1a2e;
+  border-color:#3a3a5e;
+  color:#aaa;
+}
+.source-pill::before{content:'↗';font-size:8px;opacity:0.6}
 
-    /* ── AGENT WEIGHTS ── */
-    .agents-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 8px;
-      margin-bottom: 24px;
-    }
-    .agent-row {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: border-color 0.2s;
-    }
-    .agent-row.top { border-color: rgba(0,255,136,0.3); background: rgba(0,255,136,0.04); }
-    .agent-row.bottom { border-color: rgba(255,68,68,0.3); background: rgba(255,68,68,0.04); }
-    .agent-name {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-dim);
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .agent-weight {
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 700;
-    }
-    .agent-weight.top { color: var(--green); }
-    .agent-weight.bottom { color: var(--red); }
-    .agent-weight.neutral { color: var(--text-dim); }
-    .agent-mini-bar { width: 40px; height: 3px; background: var(--bg4); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
-    .agent-mini-fill { height: 100%; border-radius: 2px; }
+/* ─── CONVICTION MATRIX ─── */
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:24px}
+.chart-title{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:3px;
+  color:var(--dim);
+  text-transform:uppercase;
+  margin-bottom:20px;
+}
 
-    /* ── BRIEF ── */
-    .brief-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 32px;
-    }
-    .brief-meta {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
-    .brief-tag {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.15em;
-      padding: 4px 10px;
-      border-radius: 4px;
-      text-transform: uppercase;
-    }
-    .brief-tag.cio { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
-    .brief-tag.date { background: var(--bg4); color: var(--text-dim); border: 1px solid var(--border); }
-    .brief-body {
-      font-size: 14px;
-      line-height: 1.8;
-      color: var(--text);
-    }
-    .brief-body p { margin-bottom: 16px; }
-    .brief-body strong { color: var(--green); font-weight: 600; }
-    .brief-body .warning { color: var(--red); }
-    .brief-body .neutral { color: var(--yellow); }
+/* ─── AGENT LEADERBOARD ─── */
+.leaderboard-header{
+  text-align:center;
+  padding:32px;
+  background:linear-gradient(180deg,rgba(0,255,136,0.04) 0%,transparent 100%);
+  border:1px solid var(--border);
+  border-radius:4px;
+  margin-bottom:20px;
+  position:relative;
+  overflow:hidden;
+}
+.leaderboard-header::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--green),transparent);
+}
+.leaderboard-title{
+  font-family:var(--font-mono);
+  font-size:clamp(20px,3vw,32px);
+  font-weight:800;
+  letter-spacing:4px;
+  color:var(--green);
+  text-shadow:var(--green-glow);
+  margin-bottom:8px;
+}
+.leaderboard-sub{
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:4px;
+  color:var(--dim);
+  text-transform:uppercase;
+}
+.sort-tabs{
+  display:flex;
+  gap:4px;
+  margin-bottom:16px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:6px;
+  width:fit-content;
+}
+.sort-tab{
+  font-family:var(--font-mono);
+  font-size:10px;
+  letter-spacing:2px;
+  padding:6px 16px;
+  border-radius:2px;
+  cursor:pointer;
+  color:var(--dim);
+  border:1px solid transparent;
+  transition:all 0.15s;
+  background:none;
+}
+.sort-tab:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.sort-tab.active{
+  color:var(--green);
+  border-color:rgba(0,255,136,0.3);
+  background:rgba(0,255,136,0.06);
+}
+.leaderboard-rows{display:flex;flex-direction:column;gap:6px}
+.agent-row{
+  display:grid;
+  grid-template-columns:36px 44px 1fr 100px 180px 80px 100px 80px 24px;
+  gap:12px;
+  align-items:center;
+  padding:12px 16px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:4px;
+  transition:all 0.2s;
+  animation:fadeIn 0.4s ease-out both;
+}
+.agent-row:hover{border-color:rgba(255,255,255,0.12);background:#10101a}
+.agent-row.top3{
+  border-color:rgba(255,215,0,0.3);
+  background:rgba(255,215,0,0.02);
+  animation:border-pulse-green 3s ease-in-out infinite,fadeIn 0.4s ease-out both;
+}
+.agent-row.top3:nth-child(1){animation-delay:0s}
+.agent-row.top3:nth-child(2){animation-delay:0.1s}
+.agent-row.top3:nth-child(3){animation-delay:0.2s}
+.agent-row.bottom3{
+  border-color:rgba(255,51,85,0.2);
+  opacity:0.85;
+}
+.agent-rank{
+  font-family:var(--font-mono);
+  font-size:18px;
+  font-weight:800;
+  text-align:center;
+}
+.rank-1{color:var(--gold);text-shadow:0 0 8px rgba(255,215,0,0.6)}
+.rank-2{color:#c0c0c0}
+.rank-3{color:#cd7f32}
+.rank-dim{color:#333}
+.agent-avatar{
+  width:40px;height:40px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:700;
+  color:#fff;
+  flex-shrink:0;
+  border:2px solid rgba(255,255,255,0.1);
+}
+.agent-info{}
+.agent-name{
+  font-family:var(--font-mono);
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:1px;
+  color:var(--text);
+  white-space:nowrap;
+}
+.agent-name.top3{
+  background:linear-gradient(90deg,#ffd700,#ffaa00,#ffd700);
+  background-size:200% auto;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:shimmer 3s linear infinite;
+}
+.layer-badge{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:8px;
+  font-weight:600;
+  letter-spacing:1px;
+  padding:2px 6px;
+  border-radius:2px;
+  margin-top:4px;
+  text-transform:uppercase;
+}
+.layer-macro{background:rgba(52,152,219,0.2);color:#3498db;border:1px solid rgba(52,152,219,0.3)}
+.layer-sector{background:rgba(243,156,18,0.2);color:#f39c12;border:1px solid rgba(243,156,18,0.3)}
+.layer-superinvestor{background:rgba(155,89,182,0.2);color:#9b59b6;border:1px solid rgba(155,89,182,0.3)}
+.layer-decision{background:rgba(0,255,136,0.12);color:var(--green);border:1px solid rgba(0,255,136,0.3)}
+.sharpe-col{display:flex;flex-direction:column;gap:4px}
+.sharpe-bar-outer{
+  height:8px;
+  background:rgba(255,255,255,0.06);
+  border-radius:4px;
+  position:relative;
+  overflow:visible;
+}
+.sharpe-bar-center{
+  position:absolute;
+  top:0;bottom:0;
+  width:2px;
+  background:rgba(255,255,255,0.2);
+  left:50%;
+  transform:translateX(-50%);
+}
+.sharpe-bar-fill{
+  position:absolute;
+  top:0;bottom:0;
+  border-radius:4px;
+  transition:all 1s ease-out;
+}
+.sharpe-bar-fill.pos{
+  background:linear-gradient(90deg,rgba(0,255,136,0.3),var(--green));
+  left:50%;
+  box-shadow:0 0 6px rgba(0,255,136,0.5);
+}
+.sharpe-bar-fill.neg{
+  background:linear-gradient(90deg,var(--red),rgba(255,51,85,0.3));
+  right:50%;
+}
+.sharpe-val{
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:600;
+  text-align:center;
+}
+.sharpe-val.pos{color:var(--green)}
+.sharpe-val.neg{color:var(--red)}
+.sharpe-val.zero{color:var(--dim)}
+.weight-badge{
+  font-family:var(--font-mono);
+  font-size:13px;
+  font-weight:700;
+  padding:4px 12px;
+  border-radius:2px;
+  text-align:center;
+}
+.weight-high{
+  background:linear-gradient(90deg,rgba(255,215,0,0.15),rgba(255,215,0,0.05));
+  border:1px solid rgba(255,215,0,0.4);
+  color:var(--gold);
+  animation:shimmer 3s linear infinite;
+  background-size:200% auto;
+}
+.weight-normal{
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);
+  color:var(--dim);
+}
+.weight-low{
+  background:rgba(255,51,85,0.1);
+  border:1px solid rgba(255,51,85,0.3);
+  color:var(--red);
+}
+.xp-col{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.xp-label{
+  font-family:var(--font-mono);
+  font-size:8px;
+  letter-spacing:2px;
+  color:var(--dim);
+  text-transform:uppercase;
+}
+.xp-label.legend{color:var(--gold)}
+.xp-label.senior{color:var(--green)}
+.xp-label.analyst{color:var(--blue)}
+.xp-bar-outer{
+  width:88px;height:6px;
+  background:rgba(255,255,255,0.06);
+  border-radius:0;
+  image-rendering:pixelated;
+}
+.xp-bar-inner{
+  height:100%;
+  background:linear-gradient(90deg,#00cc6a,#00ff88);
+  border-radius:0;
+  transition:width 1.5s ease-out;
+}
+.xp-bar-inner.legend{background:linear-gradient(90deg,#ffaa00,#ffd700)}
+.xp-bar-inner.analyst{background:linear-gradient(90deg,#2980b9,#3498db)}
+.sparkline-col{align-self:center}
+.sparkline-svg{display:block;overflow:visible}
+.sparkline-path{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.status-dot{
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 8px var(--green);
+  animation:pulse-dot 2s ease-in-out infinite;
+  justify-self:center;
+}
+.darwinian-callout{
+  margin-top:24px;
+  padding:20px 24px;
+  border:1px solid rgba(255,170,0,0.2);
+  border-radius:4px;
+  background:rgba(255,170,0,0.03);
+  text-align:center;
+}
+.darwinian-callout p{
+  font-family:var(--font-mono);
+  font-size:12px;
+  color:var(--warn);
+  letter-spacing:1px;
+  line-height:1.6;
+}
 
-    /* ── AGENT SIGNALS TABLE ── */
-    .signals-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 10px;
-    }
-    .signal-row {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 12px 14px;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-    }
-    .signal-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-    .signal-dot.risk-off { background: var(--red); box-shadow: 0 0 6px var(--red); }
-    .signal-dot.risk-on { background: var(--green); box-shadow: 0 0 6px var(--green); }
-    .signal-dot.neutral { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
-    .signal-agent { font-family: var(--mono); font-size: 11px; color: var(--text-dimmer); margin-bottom: 2px; }
-    .signal-text { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+/* ─── VIX CHARTS ─── */
+.chart-container{position:relative;height:220px}
 
-    /* ── REFLEXIVITY ── */
-    .reflex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-    .reflex-card {
-      background: var(--yellow-bg);
-      border: 1px solid rgba(255,204,0,0.25);
-      border-radius: 8px;
-      padding: 20px;
-    }
-    .reflex-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    .reflex-icon { font-size: 20px; }
-    .reflex-ticker {
-      font-family: var(--mono);
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--yellow);
-    }
-    .reflex-consensus {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--yellow-dim);
-    }
-    .reflex-warning { font-size: 13px; color: var(--text); line-height: 1.5; }
+/* ─── DAILY BRIEF ─── */
+.brief-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-top:3px solid var(--green);
+  border-radius:4px;
+  padding:28px 32px;
+  position:relative;
+  overflow:hidden;
+}
+.classified-stamp{
+  position:absolute;
+  top:20px;right:24px;
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:3px;
+  color:rgba(255,51,85,0.2);
+  border:2px solid rgba(255,51,85,0.15);
+  padding:4px 10px;
+  transform:rotate(-8deg);
+  text-transform:uppercase;
+  pointer-events:none;
+}
+.brief-header{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:3px;
+  color:var(--green);
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+.brief-date{
+  font-family:var(--font-mono);
+  font-size:10px;
+  color:var(--dim);
+  letter-spacing:2px;
+  margin-bottom:20px;
+}
+.brief-section-title{
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:var(--text);
+  text-transform:uppercase;
+  margin:16px 0 8px;
+  border-left:3px solid var(--green);
+  padding-left:10px;
+}
+.brief-body{
+  font-size:13px;
+  color:rgba(232,232,232,0.8);
+  line-height:1.7;
+}
+.brief-list{list-style:none;padding:0}
+.brief-list li{
+  font-size:12px;
+  color:rgba(232,232,232,0.75);
+  line-height:1.6;
+  padding:4px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  padding-left:16px;
+  position:relative;
+}
+.brief-list li::before{content:'›';position:absolute;left:0;color:var(--green)}
+.brief-highlight{
+  background:rgba(0,255,136,0.07);
+  border:1px solid rgba(0,255,136,0.15);
+  border-radius:2px;
+  padding:12px 16px;
+  margin-top:12px;
+}
+.brief-highlight p{
+  font-family:var(--font-mono);
+  font-size:12px;
+  color:var(--green);
+  line-height:1.6;
+}
 
-    /* ── CRO FLAGS ── */
-    .cro-flags-list { display: flex; flex-direction: column; gap: 10px; }
-    .cro-flag-item {
-      background: var(--red-bg);
-      border: 1px solid rgba(255,68,68,0.2);
-      border-radius: 6px;
-      padding: 14px 16px;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-    }
-    .cro-flag-item .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-    .cro-flag-item .text { font-size: 13px; color: var(--text); line-height: 1.5; }
+/* ─── REFLEXIVITY ─── */
+.reflex-card{
+  background:var(--card);
+  border:1px solid rgba(255,170,0,0.3);
+  border-left:3px solid var(--warn);
+  border-radius:4px;
+  padding:20px;
+  animation:border-pulse-red 3s ease-in-out infinite;
+  margin-bottom:12px;
+}
+.reflex-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+.reflex-icon{font-size:18px}
+.reflex-title{
+  font-family:var(--font-mono);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1px;
+  color:var(--warn);
+  text-transform:uppercase;
+}
+.reflex-meta{
+  display:flex;
+  gap:16px;
+  margin-bottom:8px;
+}
+.reflex-stat{
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--dim);
+}
+.reflex-stat span{color:var(--warn);font-weight:700}
+.reflex-body{font-size:12px;color:rgba(232,232,232,0.7);line-height:1.5}
 
-    /* ── HISTORY TABLE ── */
-    .history-table-wrap { overflow-x: auto; }
-    .history-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-family: var(--mono);
-      font-size: 12px;
-    }
-    .history-table th {
-      text-align: left;
-      padding: 10px 16px;
-      color: var(--text-dimmer);
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      border-bottom: 1px solid var(--border);
-      font-size: 10px;
-      text-transform: uppercase;
-    }
-    .history-table td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .history-table tr:last-child td { border-bottom: none; }
-    .history-table tr:hover td { background: var(--bg3); }
+/* ─── FOOTER ─── */
+.footer{
+  border-top:1px solid var(--border);
+  padding:28px 24px;
+  text-align:center;
+  position:relative;
+  z-index:1;
+}
+.footer-main{
+  font-family:var(--font-mono);
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:4px;
+  color:var(--green);
+  text-shadow:0 0 8px rgba(0,255,136,0.3);
+  margin-bottom:8px;
+}
+.footer-legal{
+  font-family:var(--font-mono);
+  font-size:10px;
+  color:var(--dim);
+  letter-spacing:1px;
+}
 
-    /* ── TABS ── */
-    .tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
-    .tab {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      padding: 6px 14px;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text-dim);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .tab.active { background: var(--green); color: #000; border-color: var(--green); font-weight: 700; }
-    .tab:hover:not(.active) { border-color: #444; color: var(--text); }
+/* ─── REGIME HISTORY BAR ─── */
+.regime-timeline{display:flex;gap:3px;margin-top:12px;height:28px;align-items:stretch}
+.regime-day{
+  flex:1;
+  border-radius:2px;
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.regime-day-label{
+  font-family:var(--font-mono);
+  font-size:7px;
+  font-weight:700;
+  letter-spacing:0.5px;
+  color:rgba(255,255,255,0.6);
+  writing-mode:horizontal-tb;
+}
+.regime-day.risk-on{background:rgba(0,255,136,0.3);border:1px solid rgba(0,255,136,0.4)}
+.regime-day.risk-off{background:rgba(255,51,85,0.3);border:1px solid rgba(255,51,85,0.4)}
+.regime-day.neutral{background:rgba(255,170,0,0.3);border:1px solid rgba(255,170,0,0.4)}
+.regime-dates{display:flex;gap:3px;margin-top:4px}
+.regime-date-label{
+  flex:1;
+  font-family:var(--font-mono);
+  font-size:7px;
+  color:var(--dim);
+  text-align:center;
+}
 
-    /* ── FOOTER ── */
-    .footer {
-      padding: 32px 0;
-      text-align: center;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-dimmer);
-      letter-spacing: 0.1em;
-    }
-    .footer strong { color: var(--green); }
-    .footer-divider { margin: 0 12px; opacity: 0.3; }
+/* KEY TRADE BOX */
+.key-trade-box{
+  background:rgba(0,255,136,0.05);
+  border:1px solid rgba(0,255,136,0.3);
+  border-radius:4px;
+  padding:16px 20px;
+  margin-top:16px;
+}
+.key-trade-label{
+  font-family:var(--font-mono);
+  font-size:9px;
+  letter-spacing:3px;
+  color:var(--green);
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+.key-trade-text{
+  font-family:var(--font-mono);
+  font-size:12px;
+  color:var(--text);
+  line-height:1.6;
+}
+.key-trade-text em{color:var(--green);font-style:normal;font-weight:700}
 
-    /* ── STAT CHIPS ── */
-    .stat-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 4px 12px;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-dim);
-    }
-    .stat-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+/* PROBABILITY BOX */
+.prob-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.prob-card{
+  padding:16px;
+  border-radius:4px;
+  text-align:center;
+}
+.prob-card.peace{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2)}
+.prob-card.war{background:rgba(255,51,85,0.08);border:1px solid rgba(255,51,85,0.2)}
+.prob-pct{
+  font-family:var(--font-mono);
+  font-size:32px;
+  font-weight:800;
+  line-height:1;
+  margin-bottom:4px;
+}
+.prob-card.peace .prob-pct{color:var(--green);text-shadow:var(--green-glow)}
+.prob-card.war .prob-pct{color:var(--red);text-shadow:var(--red-glow)}
+.prob-label{font-family:var(--font-mono);font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase}
 
-    /* ── CASH RESERVE ── */
-    .cash-bar-wrap { max-width: 400px; }
-    .cash-bar-label { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
-    .cash-bar-track { height: 8px; background: var(--bg4); border-radius: 4px; overflow: hidden; }
-    .cash-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--green), var(--blue)); }
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#2a2a4e}
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 768px) {
-      .header-inner { flex-direction: column; align-items: flex-start; }
-      .regime-gauge-wrap { flex-direction: column; }
-      .metrics-bar { grid-template-columns: repeat(2, 1fr); }
-      .gauge-info { min-width: unset; width: 100%; }
-      .confidence-bar-wrap { width: 100%; }
-      .logo { font-size: 22px; }
-      .gauge-regime-name { font-size: 24px; }
-    }
-
-    /* ── GLOW EFFECTS ── */
-    .glow-green { text-shadow: 0 0 20px rgba(0,255,136,0.5); }
-    .glow-red { text-shadow: 0 0 20px rgba(255,68,68,0.5); }
-    .glow-yellow { text-shadow: 0 0 20px rgba(255,204,0,0.5); }
-
-    /* ── GRID HELPERS ── */
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
-
-    /* ── SCANLINE EFFECT ── */
-    body::after {
-      content: '';
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.03) 2px,
-        rgba(0,0,0,0.03) 4px
-      );
-      pointer-events: none;
-      z-index: 9999;
-    }
-
-    /* ══════════════════════════════════════
-       AGENT LEADERBOARD
-    ══════════════════════════════════════ */
-
-    .lb-header {
-      margin-bottom: 32px;
-    }
-    .lb-title {
-      font-family: var(--mono);
-      font-size: 36px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: #ffd700;
-      text-shadow: 0 0 40px rgba(255,215,0,0.5), 0 0 80px rgba(255,215,0,0.2);
-      margin-bottom: 6px;
-    }
-    .lb-subtitle {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--text-dimmer);
-      letter-spacing: 0.15em;
-    }
-    .lb-subtitle em {
-      color: var(--text-dim);
-      font-style: normal;
-    }
-    .lb-meta-bar {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      margin-top: 16px;
-      align-items: center;
-    }
-    .lb-chip {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      padding: 4px 12px;
-      border-radius: 3px;
-      border: 1px solid;
-    }
-    .lb-chip.gold   { color: #ffd700; border-color: rgba(255,215,0,0.4); background: rgba(255,215,0,0.07); }
-    .lb-chip.green  { color: var(--green); border-color: rgba(0,255,136,0.3); background: var(--green-bg); }
-    .lb-chip.red    { color: var(--red); border-color: rgba(255,68,68,0.3); background: var(--red-bg); }
-    .lb-chip.gray   { color: var(--text-dim); border-color: var(--border); background: var(--bg3); }
-
-    /* Sort tabs */
-    .lb-sort-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .lb-sort-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--text-dimmer);
-      letter-spacing: 0.12em;
-      margin-right: 4px;
-    }
-
-    /* Column headers */
-    .lb-col-headers {
-      display: grid;
-      grid-template-columns: 56px 1fr 110px 200px 72px 80px 88px;
-      gap: 0 12px;
-      padding: 8px 18px;
-      margin-bottom: 6px;
-    }
-    .lb-col-hdr {
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 0.15em;
-      color: var(--text-dimmer);
-      text-transform: uppercase;
-    }
-    @media (max-width: 1000px) {
-      .lb-col-headers { display: none; }
-    }
-
-    /* Agent row */
-    .lb-row {
-      display: grid;
-      grid-template-columns: 56px 1fr 110px 200px 72px 80px 88px;
-      gap: 0 12px;
-      align-items: center;
-      padding: 14px 18px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      margin-bottom: 6px;
-      background: var(--bg2);
-      transition: border-color 0.2s, background 0.2s, transform 0.15s;
-      position: relative;
-      overflow: hidden;
-    }
-    .lb-row::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 3px;
-    }
-    .lb-row.tier-gold {
-      border-color: rgba(255,215,0,0.45);
-      background: rgba(255,215,0,0.04);
-      box-shadow: 0 0 20px rgba(255,215,0,0.08), inset 0 0 30px rgba(255,215,0,0.03);
-    }
-    .lb-row.tier-gold::before { background: #ffd700; box-shadow: 0 0 8px #ffd700; }
-    .lb-row.tier-silver {
-      border-color: rgba(192,192,192,0.35);
-      background: rgba(192,192,192,0.03);
-    }
-    .lb-row.tier-silver::before { background: #c0c0c0; }
-    .lb-row.tier-bronze {
-      border-color: rgba(205,127,50,0.35);
-      background: rgba(205,127,50,0.03);
-    }
-    .lb-row.tier-bronze::before { background: #cd7f32; }
-    .lb-row.tier-bottom {
-      border-color: rgba(255,68,68,0.2);
-      background: rgba(255,68,68,0.02);
-      opacity: 0.75;
-    }
-    .lb-row.tier-bottom::before { background: var(--red); opacity: 0.4; }
-    .lb-row:hover {
-      border-color: #444;
-      transform: translateX(3px);
-      z-index: 1;
-    }
-    .lb-row.tier-gold:hover { border-color: rgba(255,215,0,0.7); }
-
-    @media (max-width: 1000px) {
-      .lb-row {
-        grid-template-columns: 48px 1fr 90px;
-        grid-template-rows: auto auto auto;
-        gap: 6px;
-      }
-    }
-
-    /* Rank cell */
-    .lb-rank {
-      font-family: var(--mono);
-      font-weight: 700;
-      font-size: 20px;
-      color: var(--text-dimmer);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      line-height: 1;
-    }
-    .lb-rank .medal { font-size: 22px; margin-bottom: 2px; }
-    .lb-rank .num   { font-size: 12px; color: var(--text-dimmer); }
-
-    /* Name cell */
-    .lb-name-wrap { min-width: 0; }
-    .lb-name {
-      font-family: var(--mono);
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 3px;
-    }
-    .lb-row.tier-gold .lb-name   { color: #ffd700; text-shadow: 0 0 12px rgba(255,215,0,0.4); }
-    .lb-row.tier-silver .lb-name { color: #d0d0d0; }
-    .lb-row.tier-bronze .lb-name { color: #e08050; }
-    .lb-days {
-      font-family: var(--mono);
-      font-size: 9px;
-      color: var(--text-dimmer);
-      letter-spacing: 0.1em;
-    }
-
-    /* Layer badge */
-    .lb-layer {
-      font-family: var(--mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      padding: 3px 8px;
-      border-radius: 3px;
-      text-align: center;
-      white-space: nowrap;
-    }
-    .lb-layer.macro        { background: rgba(68,136,255,0.15); color: #4488ff; border: 1px solid rgba(68,136,255,0.3); }
-    .lb-layer.sector       { background: rgba(255,170,0,0.12); color: #ffaa00; border: 1px solid rgba(255,170,0,0.3); }
-    .lb-layer.superinvestor{ background: rgba(180,0,255,0.12); color: #cc44ff; border: 1px solid rgba(180,0,255,0.3); }
-    .lb-layer.decision     { background: rgba(0,255,136,0.1);  color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
-
-    /* Sharpe bar */
-    .lb-sharpe-wrap { }
-    .lb-sharpe-header {
-      display: flex;
-      justify-content: space-between;
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--text-dimmer);
-      margin-bottom: 4px;
-    }
-    .lb-sharpe-val {
-      font-weight: 700;
-      font-size: 11px;
-    }
-    .lb-sharpe-val.pos { color: var(--green); }
-    .lb-sharpe-val.neg { color: var(--red); }
-    .lb-sharpe-val.zero{ color: var(--text-dimmer); }
-    .lb-sharpe-track {
-      height: 5px;
-      background: var(--bg4);
-      border-radius: 3px;
-      overflow: hidden;
-      position: relative;
-    }
-    .lb-sharpe-fill {
-      height: 100%;
-      border-radius: 3px;
-      width: 0%;
-      transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .lb-sharpe-fill.pos { background: linear-gradient(90deg, var(--green-dim), var(--green)); }
-    .lb-sharpe-fill.neg { background: linear-gradient(90deg, var(--red), var(--red-dim)); }
-    .lb-sharpe-fill.zero{ background: var(--bg4); }
-
-    /* Weight badge */
-    .lb-weight-wrap { text-align: center; }
-    .lb-weight-num {
-      font-family: var(--mono);
-      font-size: 18px;
-      font-weight: 700;
-      line-height: 1;
-      margin-bottom: 2px;
-    }
-    .lb-weight-num.legend  { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.6); }
-    .lb-weight-num.senior  { color: #4488ff; }
-    .lb-weight-num.analyst { color: var(--text-dim); }
-    .lb-weight-num.rookie  { color: var(--red-dim); }
-    .lb-weight-label {
-      font-family: var(--mono);
-      font-size: 8px;
-      letter-spacing: 0.1em;
-      color: var(--text-dimmer);
-      text-align: center;
-    }
-
-    /* XP Level */
-    .lb-level-wrap { text-align: center; }
-    .lb-level-badge {
-      font-family: var(--mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      padding: 4px 8px;
-      border-radius: 3px;
-      display: inline-block;
-      margin-bottom: 4px;
-    }
-    .lb-level-badge.legend  { background: rgba(255,215,0,0.15); color: #ffd700; border: 1px solid rgba(255,215,0,0.4); }
-    .lb-level-badge.senior  { background: rgba(68,136,255,0.12); color: #4488ff; border: 1px solid rgba(68,136,255,0.3); }
-    .lb-level-badge.analyst { background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid var(--border); }
-    .lb-level-badge.rookie  { background: rgba(255,68,68,0.1); color: var(--red); border: 1px solid rgba(255,68,68,0.3); }
-    .lb-xp-track {
-      height: 3px;
-      background: var(--bg4);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    .lb-xp-fill {
-      height: 100%;
-      border-radius: 2px;
-      width: 0%;
-      transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .lb-xp-fill.legend  { background: #ffd700; }
-    .lb-xp-fill.senior  { background: #4488ff; }
-    .lb-xp-fill.analyst { background: var(--text-dimmer); }
-    .lb-xp-fill.rookie  { background: var(--red-dim); }
-
-    /* Sparkline */
-    .lb-sparkline {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-    }
-    .lb-sparkline svg {
-      overflow: visible;
-    }
-
-    /* Entrance animation */
-    @keyframes lb-slide-in {
-      from { opacity: 0; transform: translateX(-16px); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-    .lb-row {
-      animation: lb-slide-in 0.4s ease both;
-    }
-
-    /* Bottom callout */
-    .lb-callout {
-      margin-top: 24px;
-      border: 1px solid rgba(255,215,0,0.2);
-      border-radius: 8px;
-      background: rgba(255,215,0,0.04);
-      padding: 20px 24px;
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-    }
-    .lb-callout-icon { font-size: 28px; flex-shrink: 0; }
-    .lb-callout-text { }
-    .lb-callout-title {
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 700;
-      color: #ffd700;
-      letter-spacing: 0.08em;
-      margin-bottom: 6px;
-    }
-    .lb-callout-body {
-      font-size: 13px;
-      color: var(--text-dim);
-      line-height: 1.6;
-    }
-    .lb-callout-body strong { color: var(--text); }
-  </style>
+/* Responsive */
+@media(max-width:900px){
+  .agent-row{grid-template-columns:28px 36px 1fr 80px 140px;gap:8px}
+  .agent-row .weight-badge,.agent-row .xp-col,.agent-row .sparkline-col,.agent-row .status-dot{display:none}
+  .regime-center{grid-template-columns:1fr;min-height:auto}
+  .regime-panel-center{border-left:none;border-right:none;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .positions-grid{grid-template-columns:1fr}
+  .grid-2{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════════
-     EMBEDDED DATA
-══════════════════════════════════════════════════════════ -->
-<script>
-const GEKKO_DATA = {
-  history: [
-    {
-      date: "2026-03-24",
-      regime: "RISK_OFF",
-      regime_confidence: 0.85,
-      vix: 26.5,
-      spx: 6556.37,
-      spx_change_pct: -0.37,
-      ten_year_yield: 4.33,
-      dxy: 99.1,
-      brent_oil: 99.0,
-      key_driver: "US-Iran war, Strait of Hormuz partially shut",
-      top_longs: [
-        { ticker: "LMT", conviction: 72, thesis: "Active military conflict, defense spend rises regardless of resolution", direction: "LONG" },
-        { ticker: "RTX", conviction: 72, thesis: "Defense, uncorrelated to Iran peace outcome", direction: "LONG" },
-        { ticker: "LNG", conviction: 68, thesis: "Cheniere — Europe energy security, Hormuz-insulated, locked contracts", direction: "LONG" },
-        { ticker: "VRTX", conviction: 65, thesis: "CF monopoly, zero macro exposure, Ackman-style compounder", direction: "LONG" },
-        { ticker: "NVDA", conviction: 55, thesis: "Hold only — AI capex intact but VIX > 25 prevents adds", direction: "LONG" }
-      ],
-      top_shorts: [
-        { ticker: "UAL", conviction: 58, thesis: "Oil floor at $99, jet fuel cost crush, no pricing power ceiling", direction: "SHORT" },
-        { ticker: "DAL", conviction: 58, thesis: "Same as UAL", direction: "SHORT" }
-      ],
-      agent_weights: {}
-    },
-    {
-      date: "2026-03-25",
-      regime: "RISK_OFF",
-      regime_confidence: 0.65,
-      vix: 26.06,
-      spx: 6556.37,
-      spx_change_pct: 0,
-      ten_year_yield: 4.35,
-      dxy: 99.25,
-      brent_oil: 98.28,
-      key_driver: "15-point ceasefire proposal via Pakistan; Iran denies talks; binary event",
-      top_longs: [
-        { ticker: "NVDA", conviction: 68, thesis: "Peace dividend + AI capex intact + double-bottom technical", direction: "LONG" },
-        { ticker: "LNG", conviction: 68, thesis: "Cheniere locked European contracts. Market misunderstanding = alpha.", direction: "LONG" },
-        { ticker: "VRTX", conviction: 65, thesis: "CF monopoly, zero macro/geopolitical exposure. Hold.", direction: "LONG" },
-        { ticker: "AVGO", conviction: 60, thesis: "Custom AI silicon. Google/Meta capex = revenue. Peace dividend catalyst.", direction: "LONG" },
-        { ticker: "ISRG", conviction: 58, thesis: "Alpha Discovery pick. Robotic surgery backlog building. Zero war exposure.", direction: "LONG" }
-      ],
-      top_shorts: [
-        { ticker: "UAL", conviction: 55, thesis: "Grounded flights from Middle East strikes. Operational disruption > fuel savings.", direction: "SHORT" },
-        { ticker: "DAL", conviction: 55, thesis: "Same as UAL", direction: "SHORT" },
-        { ticker: "XLE", conviction: 50, thesis: "Only initiate if ceasefire confirmed. Energy sector would unwind 10-20%.", direction: "SHORT" }
-      ],
-      agent_weights: {
-        geopolitical: 1.05,
-        news_sentiment: 1.05,
-        volatility: 1.05,
-        cio: 1.05,
-        aschenbrenner: 1.05,
-        energy: 0.95,
-        institutional_flow: 0.95
-      }
-    },
-    {
-      date: "2026-03-26",
-      regime: "NEUTRAL_RISK_OFF",
-      regime_confidence: 0.60,
-      vix: 26.06,
-      spx: null,
-      spx_change_pct: null,
-      ten_year_yield: 4.37,
-      dxy: 99.25,
-      brent_oil: 98.28,
-      key_driver: "US-Iran ceasefire negotiations; binary event risk dominating",
-      top_longs: [
-        { ticker: "NVDA", conviction: 68, sizing: "12%", thesis: "AI super-cycle structural buy; ceasefire = multiple expansion; reflexivity-adjusted sizing", direction: "LONG", source: "Aschenbrenner (1.05x), Semiconductor desk (1.0x)" },
-        { ticker: "ABBV", conviction: 70, sizing: "10%", thesis: "Defensive rotation anchor; dividend floor; FCF visibility; Baker + sector desk pick", direction: "LONG", source: "Baker (1.0x), Healthcare desk (1.0x)" },
-        { ticker: "TLT", conviction: 62, sizing: "10%", thesis: "Druckenmiller ceasefire normalization — oil inflation premium unwinds; 10Y yields normalize", direction: "LONG", source: "Druckenmiller (1.0x)" },
-        { ticker: "CMG", conviction: 64, sizing: "8%", thesis: "Stagflation-resistant quality compounder; pricing power; Ackman lens", direction: "LONG", source: "Ackman (1.0x)" },
-        { ticker: "CEG", conviction: 61, sizing: "7%", thesis: "Nuclear/energy security meta-trade; AI power demand + geopolitical energy security", direction: "LONG", source: "Alpha Discovery (1.0x), Aschenbrenner (1.05x)" },
-        { ticker: "TUR", conviction: 58, sizing: "5%", thesis: "Alpha discovery — geopolitical risk premium unwind on ceasefire; reconstruction trade", direction: "LONG", source: "Alpha Discovery (1.0x)" }
-      ],
-      top_shorts: [
-        { ticker: "XLE", conviction: 60, sizing: "6%", thesis: "Ceasefire = oil -$15-25/barrel; E&P valuations elevated; CRO-reduced from 8%", direction: "SHORT", cro_flag: "DO NOT SIZE LARGE — short squeeze risk if talks collapse", source: "Energy desk (0.95x), CRO-flagged" }
-      ],
-      agent_weights: {
-        cio: 1.05,
-        news_sentiment: 1.05,
-        volatility: 1.05,
-        aschenbrenner: 1.05,
-        geopolitical: 1.05,
-        institutional_flow: 0.95,
-        energy: 0.95
-      },
-      cio_commentary: "Regime is hostage to a single binary event. Portfolio is sized conservatively (58% deployed) to survive a no-deal scenario while capturing significant upside if ceasefire materializes. Key risk: size up aggressively on confirmed ceasefire signal — NVDA to 20%, TLT to 15%, close XLE short. Key risk down: stop losses at -8% on individual names, reduce to 30% deployed if VIX breaks above 35.",
-      cash_reserve: 42,
-      reflexivity_flags: [
-        { ticker: "NVDA/AI", consensus_agents: 4, warning: "Crowded trade — semiconductor desk, Aschenbrenner, Alpha Discovery, CIO all long AI; reduce sizing 30% but maintain long bias" }
-      ],
-      cro_flags: [
-        "Market priced for ~70% ceasefire probability — actual odds closer to 40%; downside gap is large",
-        "NVDA + TLT correlation failure on no-deal scenario — false hedge",
-        "XLE short faces short-squeeze risk if conflict escalates",
-        "Size down 25-30% across all positions; add binary event optionality"
-      ],
-      agent_signals: {
-        central_bank: { signal: "RISK_OFF", text: "Stagflation risk from oil spike; Fed on hold; no cuts until oil normalizes" },
-        geopolitical: { signal: "RISK_OFF", text: "US-Iran conflict; 15-point ceasefire proposal via Pakistan; Iran 'weighing'; binary event" },
-        china: { signal: "RISK_OFF", text: "Heavy oil importer; MSCI Asia -1.3%; demand headwind" },
-        dollar: { signal: "RISK_OFF", text: "DXY elevated from safe-haven demand + yield differential; EM pressure" },
-        yield_curve: { signal: "RISK_OFF", text: "10Y +42bps in 1 month; stagflation geometry; multiple compression ongoing" },
-        commodities: { signal: "RISK_OFF", text: "Brent $98, WTI $87, +$26 YoY; oil is dominant signal" },
-        volatility: { signal: "NEUTRAL", text: "VIX 26 = worry zone, not panic; elevated but not capitulation" },
-        emerging_markets: { signal: "RISK_OFF", text: "MSCI Asia -1.3%; DXY pressure; oil import cost headwind" },
-        news_sentiment: { signal: "NEUTRAL", text: "Wed bullish (ceasefire hope), Thu reversal (Iran uncertainty); whipsaw narrative" },
-        institutional_flow: { signal: "RISK_OFF", text: "Defensives (XLV, XLI) leading; rotation away from energy and cyclicals" }
-      }
-    }
-  ]
-};
-
-// All 25 Darwinian agents with current weights
-const ALL_AGENTS = [
-  // Macro Layer (10)
-  { name: "central_bank",       label: "Central Bank",       weight: 1.00, layer: "macro" },
-  { name: "geopolitical",       label: "Geopolitical",       weight: 1.05, layer: "macro" },
-  { name: "china",              label: "China",              weight: 1.00, layer: "macro" },
-  { name: "dollar",             label: "Dollar/DXY",         weight: 1.00, layer: "macro" },
-  { name: "yield_curve",        label: "Yield Curve",        weight: 1.00, layer: "macro" },
-  { name: "commodities",        label: "Commodities",        weight: 1.00, layer: "macro" },
-  { name: "volatility",         label: "Volatility/VIX",     weight: 1.05, layer: "macro" },
-  { name: "emerging_markets",   label: "Emerging Markets",   weight: 1.00, layer: "macro" },
-  { name: "news_sentiment",     label: "News Sentiment",     weight: 1.05, layer: "macro" },
-  { name: "institutional_flow", label: "Institutional Flow", weight: 0.95, layer: "macro" },
-  // Sector Layer (8)
-  { name: "semiconductor",      label: "Semiconductor",      weight: 1.00, layer: "sector" },
-  { name: "energy",             label: "Energy",             weight: 0.95, layer: "sector" },
-  { name: "biotech",            label: "Biotech",            weight: 1.00, layer: "sector" },
-  { name: "consumer",           label: "Consumer",           weight: 1.00, layer: "sector" },
-  { name: "industrials",        label: "Industrials",        weight: 1.00, layer: "sector" },
-  { name: "financials",         label: "Financials",         weight: 1.00, layer: "sector" },
-  { name: "healthcare",         label: "Healthcare",         weight: 1.00, layer: "sector" },
-  { name: "relationship_map",   label: "Relationship Map",   weight: 1.00, layer: "sector" },
-  // Superinvestors (4)
-  { name: "druckenmiller",      label: "Druckenmiller",      weight: 1.00, layer: "super" },
-  { name: "aschenbrenner",      label: "Aschenbrenner",      weight: 1.05, layer: "super" },
-  { name: "baker",              label: "Baker",              weight: 1.00, layer: "super" },
-  { name: "ackman",             label: "Ackman",             weight: 1.00, layer: "super" },
-  // Meta (3)
-  { name: "cio",                label: "CIO",                weight: 1.05, layer: "meta" },
-  { name: "cro",                label: "CRO (Risk)",         weight: 1.00, layer: "meta" },
-  { name: "alpha_discovery",    label: "Alpha Discovery",    weight: 1.00, layer: "meta" }
-];
-
-// ── LEADERBOARD DATA (from darwinian_weights.json) ──
-const LB_AGENTS = [
-  { key: "cio",                display: "THE C.I.O.",          layer: "decision",      weight: 1.05, sharpe: 0.20, recs: 1 },
-  { key: "aschenbrenner",      display: "ASCHENBRENNER",       layer: "superinvestor", weight: 1.05, sharpe: 0.18, recs: 1 },
-  { key: "news_sentiment",     display: "NEWS SENTINEL",       layer: "macro",         weight: 1.05, sharpe: 0.15, recs: 1 },
-  { key: "geopolitical",       display: "GEOPOLITICAL",        layer: "macro",         weight: 1.05, sharpe: 0.12, recs: 1 },
-  { key: "volatility",         display: "VOLATILITY",          layer: "macro",         weight: 1.05, sharpe: 0.10, recs: 1 },
-  { key: "cro",                display: "C.R.O.",              layer: "decision",      weight: 1.00, sharpe: 0.08, recs: 1 },
-  { key: "druckenmiller",      display: "THE DRUCKENMILLER",   layer: "superinvestor", weight: 1.00, sharpe: 0.06, recs: 1 },
-  { key: "semiconductor",      display: "SEMI DESK",           layer: "sector",        weight: 1.00, sharpe: 0.05, recs: 1 },
-  { key: "biotech",            display: "BIOTECH DESK",        layer: "sector",        weight: 1.00, sharpe: 0.04, recs: 1 },
-  { key: "baker",              display: "BAKER",               layer: "superinvestor", weight: 1.00, sharpe: 0.04, recs: 1 },
-  { key: "ackman",             display: "THE ACKMAN",          layer: "superinvestor", weight: 1.00, sharpe: 0.02, recs: 1 },
-  { key: "central_bank",       display: "THE FED",             layer: "macro",         weight: 1.00, sharpe: 0.00, recs: 1 },
-  { key: "china",              display: "CHINA DESK",          layer: "macro",         weight: 1.00, sharpe: 0.00, recs: 1 },
-  { key: "dollar",             display: "DOLLAR / DXY",        layer: "macro",         weight: 1.00, sharpe: 0.00, recs: 1 },
-  { key: "yield_curve",        display: "YIELD CURVE",         layer: "macro",         weight: 1.00, sharpe: 0.00, recs: 1 },
-  { key: "commodities",        display: "COMMODITIES",         layer: "macro",         weight: 1.00, sharpe: 0.00, recs: 1 },
-  { key: "emerging_markets",   display: "EMERGING MKTS",       layer: "macro",         weight: 1.00, sharpe: 0.00, recs: 1 },
-  { key: "consumer",           display: "CONSUMER DESK",       layer: "sector",        weight: 1.00, sharpe: 0.00, recs: 1 },
-  { key: "industrials",        display: "INDUSTRIALS",         layer: "sector",        weight: 1.00, sharpe: 0.00, recs: 1 },
-  { key: "financials",         display: "FINANCIALS",          layer: "sector",        weight: 1.00, sharpe: 0.00, recs: 1 },
-  { key: "relationship_mapper",display: "REL. MAPPER",         layer: "sector",        weight: 1.00, sharpe: 0.00, recs: 1 },
-  { key: "alpha_discovery",    display: "ALPHA HUNTER",        layer: "decision",      weight: 1.00, sharpe: 0.00, recs: 1 },
-  { key: "autonomous_execution",display:"AUTO EXEC",           layer: "decision",      weight: 1.00, sharpe: 0.00, recs: 1 },
-  { key: "institutional_flow", display: "INST. FLOW",          layer: "macro",         weight: 0.95, sharpe: -0.08, recs: 1 },
-  { key: "energy",             display: "ENERGY DESK",         layer: "sector",        weight: 0.95, sharpe: -0.12, recs: 1 }
-];
-// Already sorted by sharpe desc — rank = index + 1
-</script>
-
-<!-- ══════════════════════════════════════════════════════════
-     HEADER
-══════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════ -->
+<!-- 1. HEADER -->
+<!-- ══════════════════════════════════════ -->
 <header class="header">
-  <div class="container">
-    <div class="header-inner">
-      <div class="logo">
-        GEKKO
-        <span>Autonomous AI Trading Intelligence · 25 Agents</span>
-      </div>
-      <div class="header-right">
-        <div class="live-dot"></div>
-        <div class="header-date" id="header-date">—</div>
-        <div class="regime-badge" id="header-regime">—</div>
-      </div>
-    </div>
+  <div class="header-left">
+    <div class="gekko-logo">G E K K O</div>
+    <div class="header-sub">25-AGENT AUTONOMOUS TRADING INTELLIGENCE &nbsp;·&nbsp; SEASON 1 &nbsp;·&nbsp; DAY 3</div>
+  </div>
+  <div class="header-right">
+    <div class="live-clock" id="live-clock">--:--:--</div>
+    <div class="regime-badge risk-off">⚡ RISK_OFF</div>
   </div>
 </header>
 
-<!-- ══════════════════════════════════════════════════════════
-     REGIME GAUGE
-══════════════════════════════════════════════════════════ -->
-<section class="section">
-  <div class="container">
-    <div class="section-title">⬡ Regime Intelligence</div>
-    <div class="regime-gauge-wrap">
-      <div class="gauge-visual">
-        <div class="gauge-arc">
-          <div class="gauge-ring"></div>
+<!-- ══════════════════════════════════════ -->
+<!-- MARKET TICKER -->
+<!-- ══════════════════════════════════════ -->
+<div class="ticker-bar">
+  <div class="ticker-inner" id="ticker-inner">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<div class="container" style="padding-top:32px">
+
+<!-- ══════════════════════════════════════ -->
+<!-- 2. REGIME COMMAND CENTER -->
+<!-- ══════════════════════════════════════ -->
+<section>
+  <div class="section-label">▸ Regime Command Center</div>
+  <div class="regime-center">
+    <div class="regime-panel regime-panel-left">
+      <div class="regime-label">Current Regime</div>
+      <div class="regime-word red">RISK_OFF</div>
+      <div class="regime-word red" style="font-size:clamp(14px,1.5vw,22px);margin-top:6px;opacity:0.7">/ TRANSITIONAL</div>
+      <div class="regime-confidence">Confidence: <span>74%</span></div>
+      <div class="prob-grid" style="margin-top:20px">
+        <div class="prob-card peace">
+          <div class="prob-pct">60%</div>
+          <div class="prob-label">Ceasefire<br>≤7 Days</div>
         </div>
-        <div class="gauge-needle" id="gauge-needle"></div>
-        <div class="gauge-center"></div>
-        <div class="gauge-labels">
-          <span>RISK ON</span>
-          <span>NEUTRAL</span>
-          <span>RISK OFF</span>
-        </div>
-      </div>
-      <div class="gauge-info">
-        <div class="gauge-regime-name" id="regime-name">—</div>
-        <div class="gauge-confidence" id="regime-confidence">Confidence: —</div>
-        <div class="confidence-bar-wrap">
-          <div class="confidence-bar-track">
-            <div class="confidence-bar-fill" id="confidence-fill" style="width: 0%"></div>
-          </div>
-        </div>
-        <div class="gauge-driver" id="regime-driver"></div>
-      </div>
-    </div>
-
-    <!-- Agent Signals Grid -->
-    <div style="margin-top: 32px;">
-      <div class="section-title" style="margin-bottom: 16px;">Agent Signal Breakdown</div>
-      <div class="signals-grid" id="signals-grid"></div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════
-     KEY METRICS BAR
-══════════════════════════════════════════════════════════ -->
-<section class="section">
-  <div class="container">
-    <div class="section-title">📊 Market Vitals</div>
-    <div class="metrics-bar" id="metrics-bar"></div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════
-     TOP LONGS / SHORTS
-══════════════════════════════════════════════════════════ -->
-<section class="section">
-  <div class="container">
-    <div class="section-title">📈 Current Portfolio Positions</div>
-
-    <div class="stat-chips" id="portfolio-stats"></div>
-
-    <div style="margin-bottom: 12px;">
-      <div class="section-title" style="font-size: 9px; color: var(--green); letter-spacing: 0.15em;">LONGS</div>
-    </div>
-    <div class="cards-grid" id="longs-grid"></div>
-
-    <div style="margin: 28px 0 12px;">
-      <div class="section-title" style="font-size: 9px; color: var(--red); letter-spacing: 0.15em;">SHORTS</div>
-    </div>
-    <div class="cards-grid" id="shorts-grid"></div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════
-     CONVICTION CHART
-══════════════════════════════════════════════════════════ -->
-<section class="section">
-  <div class="container">
-    <div class="section-title">🎯 Conviction Map</div>
-    <div class="chart-wrap">
-      <div class="chart-title">ALL POSITIONS · SORTED BY CONVICTION · LONGS GREEN / SHORTS RED</div>
-      <div class="chart-container" style="height: 320px;">
-        <canvas id="convictionChart"></canvas>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════
-     DARWINIAN AGENT WEIGHTS
-══════════════════════════════════════════════════════════ -->
-<section class="section">
-  <div class="container">
-    <div class="section-title">🧬 Darwinian Agent Weights</div>
-    <div class="chart-wrap">
-      <div class="chart-title">25 AGENTS · WEIGHT RANGE 0.3–2.5 · TOP 3 🟢 · BOTTOM 3 🔴</div>
-      <div class="chart-container" style="height: 420px;">
-        <canvas id="agentChart"></canvas>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════
-     REGIME HISTORY CHART
-══════════════════════════════════════════════════════════ -->
-<section class="section">
-  <div class="container">
-    <div class="section-title">📉 Regime History</div>
-    <div class="two-col">
-      <div class="chart-wrap">
-        <div class="chart-title">VIX OVER TIME</div>
-        <div class="chart-container" style="height: 240px;">
-          <canvas id="vixChart"></canvas>
-        </div>
-      </div>
-      <div class="chart-wrap">
-        <div class="chart-title">10Y YIELD OVER TIME</div>
-        <div class="chart-container" style="height: 240px;">
-          <canvas id="yieldChart"></canvas>
+        <div class="prob-card war">
+          <div class="prob-pct">40%</div>
+          <div class="prob-label">Iran<br>Rejects</div>
         </div>
       </div>
     </div>
-    <div style="margin-top: 20px;">
-      <div class="chart-wrap">
-        <div class="chart-title">BRENT CRUDE OVER TIME</div>
-        <div class="chart-container" style="height: 200px;">
-          <canvas id="oilChart"></canvas>
-        </div>
+    <div class="regime-panel regime-panel-center">
+      <div class="regime-label" style="text-align:center;margin-bottom:24px">Regime Pulse · Day 25</div>
+      <div class="pulse-container" id="pulse-container">
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring"></div>
+        <div class="pulse-dot"></div>
+      </div>
+      <div style="margin-top:20px;text-align:center">
+        <div class="regime-confidence" style="margin-top:0">VIX <span>26.06</span></div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--dim);margin-top:6px;letter-spacing:2px">GROSS EXPOSURE −20% RULE ACTIVE</div>
       </div>
     </div>
-    <!-- History table -->
-    <div style="margin-top: 20px;">
-      <div class="history-table-wrap">
-        <table class="history-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Regime</th>
-              <th>VIX</th>
-              <th>10Y Yield</th>
-              <th>Brent</th>
-              <th>DXY</th>
-              <th>Key Driver</th>
-            </tr>
-          </thead>
-          <tbody id="history-tbody"></tbody>
-        </table>
+    <div class="regime-panel regime-panel-right">
+      <div class="regime-label">Macro Drivers</div>
+      <div class="macro-driver">
+        <div class="macro-driver-icon">⚔</div>
+        <div class="macro-driver-text">US-Iran War Day 25. 15-point ceasefire proposal submitted via Pakistan. Iran: "negotiating with itself." Binary outcome risk.</div>
+      </div>
+      <div class="macro-driver">
+        <div class="macro-driver-icon">🛢</div>
+        <div class="macro-driver-text">Brent −5.9% → $98.28. First sub-$100 close since war. Markets front-running deal that hasn't happened yet.</div>
+      </div>
+      <div class="macro-driver">
+        <div class="macro-driver-icon">📊</div>
+        <div class="macro-driver-text">VIX 26.06 — above 25 threshold. Fed on hold at 3.5-3.75%. Gross exposure reduction rule stays active until VIX &lt; 22.</div>
+      </div>
+      <div class="source-pills" style="margin-top:12px">
+        <a class="source-pill" href="https://www.reuters.com/business/energy/global-markets-global-markets-2026-03-25/" target="_blank">reuters.com</a>
+        <a class="source-pill" href="https://www.theguardian.com/world/live/2026/mar/25/middle-east-crisis-live-iran-war-oil-prices-more-us-troops-reportedly-deployed-donald-trump-attacks-on-lebanon" target="_blank">theguardian.com</a>
+        <a class="source-pill" href="https://fortune.com/2026/03/23/trump-taco-iran-markets-rally-sp-500-crude-oil-peace-talks/" target="_blank">fortune.com</a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════════
-     DAILY BRIEF
-══════════════════════════════════════════════════════════ -->
-<section class="section">
-  <div class="container">
-    <div class="section-title">📋 CIO Daily Brief</div>
-    <div class="brief-card">
-      <div class="brief-meta">
-        <span class="brief-tag cio">CIO Commentary</span>
-        <span class="brief-tag date" id="brief-date">—</span>
-      </div>
-      <div class="brief-body" id="brief-body"></div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════
-     CRO FLAGS
-══════════════════════════════════════════════════════════ -->
-<section class="section">
-  <div class="container">
-    <div class="section-title">⚠️ CRO Risk Flags</div>
-    <div class="cro-flags-list" id="cro-flags-list"></div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════
-     REFLEXIVITY FLAGS
-══════════════════════════════════════════════════════════ -->
-<section class="section">
-  <div class="container">
-    <div class="section-title">🔁 Reflexivity Engine</div>
-    <div class="reflex-grid" id="reflex-grid"></div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════
-     AGENT LEADERBOARD
-══════════════════════════════════════════════════════════ -->
-<section class="section" id="leaderboard-section">
-  <div class="container">
-
-    <!-- Header -->
-    <div class="lb-header">
-      <div class="lb-title">🏆 AGENT LEADERBOARD</div>
-      <div class="lb-subtitle">SEASON 1 <em>·</em> DAY 3 <em>·</em> RANKED BY SHARPE RATIO</div>
-      <div class="lb-meta-bar">
-        <span class="lb-chip gold">🥇 Top performer: THE C.I.O.</span>
-        <span class="lb-chip green">25 agents active</span>
-        <span class="lb-chip gray">3 days of history</span>
-        <span class="lb-chip red">⚠️ ENERGY DESK — underperforming</span>
-      </div>
-    </div>
-
-    <!-- Sort controls -->
-    <div class="lb-sort-row">
-      <span class="lb-sort-label">SORT BY:</span>
-      <button class="tab active" onclick="lbSort('sharpe', this)">SHARPE</button>
-      <button class="tab" onclick="lbSort('weight', this)">WEIGHT</button>
-      <button class="tab" onclick="lbSort('name', this)">NAME</button>
-      <button class="tab" onclick="lbSort('layer', this)">LAYER</button>
-    </div>
-
-    <!-- Column headers (desktop) -->
-    <div class="lb-col-headers">
-      <div class="lb-col-hdr">RANK</div>
-      <div class="lb-col-hdr">AGENT</div>
-      <div class="lb-col-hdr">LAYER</div>
-      <div class="lb-col-hdr">SHARPE (30D)</div>
-      <div class="lb-col-hdr">WEIGHT</div>
-      <div class="lb-col-hdr">LEVEL</div>
-      <div class="lb-col-hdr">TREND</div>
-    </div>
-
-    <!-- Rows injected by JS -->
-    <div id="lb-rows"></div>
-
-    <!-- Callout -->
-    <div class="lb-callout">
-      <div class="lb-callout-icon">🧬</div>
-      <div class="lb-callout-text">
-        <div class="lb-callout-title">DARWINIAN EVOLUTION IN PROGRESS</div>
-        <div class="lb-callout-body">
-          Every agent starts at weight <strong>1.0 (ANALYST)</strong>. As the system accumulates daily Sharpe data,
-          top performers evolve toward <strong>LEGEND (2.0–2.5×)</strong> and their calls dominate portfolio construction —
-          while underperformers are progressively silenced.
-          The leaderboard will look very different in 30 days. <strong>Only the signal survives.</strong>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════
-     FOOTER
-══════════════════════════════════════════════════════════ -->
-<footer class="footer">
-  <div class="container">
-    <div style="margin-bottom: 8px;">
-      <strong>GEKKO</strong>
-      <span class="footer-divider">·</span>
-      25 agents
-      <span class="footer-divider">·</span>
-      Self-improving daily
-      <span class="footer-divider">·</span>
-      Powered by Darwinian evolution
+<!-- ══════════════════════════════════════ -->
+<!-- 4. ACTIVE POSITIONS -->
+<!-- ══════════════════════════════════════ -->
+<section>
+  <div class="section-label">▸ Active Positions — March 25, 2026</div>
+  <div class="positions-grid">
+    <div>
+      <div class="positions-col-header longs">▲ LONGS</div>
+      <div id="longs-col"></div>
     </div>
     <div>
-      4 layers: Macro · Sector · Superinvestors · Decision
-      <span class="footer-divider">·</span>
-      Reflexivity engine active
-      <span class="footer-divider">·</span>
-      Updated daily at market open
+      <div class="positions-col-header shorts">▼ SHORTS</div>
+      <div id="shorts-col"></div>
     </div>
   </div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- 5. CONVICTION MATRIX -->
+<!-- ══════════════════════════════════════ -->
+<section>
+  <div class="section-label">▸ Conviction Matrix</div>
+  <div class="chart-card">
+    <div class="chart-title">↔ Conviction Score · Longs (right) vs Shorts (left)</div>
+    <div class="chart-container" style="height:260px">
+      <canvas id="convictionChart"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- 6. AGENT LEADERBOARD -->
+<!-- ══════════════════════════════════════ -->
+<section>
+  <div class="leaderboard-header">
+    <div class="leaderboard-title">🏆 AGENT LEADERBOARD</div>
+    <div class="leaderboard-sub">Season 1 &nbsp;·&nbsp; Day 3 &nbsp;·&nbsp; Darwinian Selection In Progress</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+    <div class="sort-tabs">
+      <button class="sort-tab active" data-sort="sharpe">SHARPE</button>
+      <button class="sort-tab" data-sort="weight">WEIGHT</button>
+      <button class="sort-tab" data-sort="layer">LAYER</button>
+      <button class="sort-tab" data-sort="name">NAME</button>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--dim);letter-spacing:2px">25 AGENTS ACTIVE</div>
+  </div>
+  <!-- column headers -->
+  <div style="display:grid;grid-template-columns:36px 44px 1fr 100px 180px 80px 100px 80px 24px;gap:12px;padding:0 16px 8px;font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--border);margin-bottom:8px">
+    <div>#</div>
+    <div></div>
+    <div>Agent</div>
+    <div style="text-align:center">Layer</div>
+    <div style="text-align:center">Sharpe</div>
+    <div style="text-align:center">Weight</div>
+    <div>XP / Level</div>
+    <div style="text-align:center">7D</div>
+    <div></div>
+  </div>
+  <div class="leaderboard-rows" id="leaderboard-rows"></div>
+  <div class="darwinian-callout">
+    <p>⚔ Darwinian weights update daily. The leaderboard you see today is not the leaderboard you'll see in 30 days.<br>
+    Agents that call it right get more capital. Agents that don't get cut. Welcome to the tournament.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- 7. VIX & REGIME HISTORY -->
+<!-- ══════════════════════════════════════ -->
+<section>
+  <div class="section-label">▸ Market History — Last 12 Trading Days</div>
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="chart-title">VIX — Volatility Index (color bands: &lt;15 safe · 15-25 caution · &gt;25 danger)</div>
+      <div class="chart-container">
+        <canvas id="vixChart"></canvas>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:16px">
+        <div style="font-family:var(--font-mono);font-size:10px;display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:rgba(0,255,136,0.4);display:inline-block;border-radius:2px"></span><span style="color:var(--dim)">&lt;15 CALM</span></div>
+        <div style="font-family:var(--font-mono);font-size:10px;display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:rgba(255,170,0,0.4);display:inline-block;border-radius:2px"></span><span style="color:var(--dim)">15-25 CAUTION</span></div>
+        <div style="font-family:var(--font-mono);font-size:10px;display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:rgba(255,51,85,0.4);display:inline-block;border-radius:2px"></span><span style="color:var(--dim)">&gt;25 DANGER</span></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Regime Timeline — Daily Classification</div>
+      <div style="margin-top:20px">
+        <div class="regime-timeline" id="regime-timeline"></div>
+        <div class="regime-dates" id="regime-dates"></div>
+        <div style="display:flex;gap:16px;margin-top:16px">
+          <div style="font-family:var(--font-mono);font-size:10px;display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:rgba(0,255,136,0.4);border:1px solid rgba(0,255,136,0.5);display:inline-block;border-radius:2px"></span><span style="color:var(--dim)">RISK_ON</span></div>
+          <div style="font-family:var(--font-mono);font-size:10px;display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:rgba(255,51,85,0.4);border:1px solid rgba(255,51,85,0.5);display:inline-block;border-radius:2px"></span><span style="color:var(--dim)">RISK_OFF</span></div>
+          <div style="font-family:var(--font-mono);font-size:10px;display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:rgba(255,170,0,0.4);border:1px solid rgba(255,170,0,0.5);display:inline-block;border-radius:2px"></span><span style="color:var(--dim)">NEUTRAL</span></div>
+        </div>
+        <!-- SPX overlay -->
+        <div style="margin-top:20px">
+          <div class="chart-title" style="margin-bottom:12px">S&P 500 — Daily Close</div>
+          <div class="chart-container" style="height:130px"><canvas id="spxChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- 8. DAILY BRIEF -->
+<!-- ══════════════════════════════════════ -->
+<section>
+  <div class="section-label">▸ Daily Intelligence Brief</div>
+  <div class="brief-card">
+    <div class="classified-stamp">CLASSIFIED</div>
+    <div class="brief-header">▸ Gekko Intelligence · Daily Brief</div>
+    <div class="brief-date">MARCH 25, 2026 · 06:01 ET · RUN DAY 2 · 25 AGENTS ACTIVE</div>
+
+    <div class="brief-section-title">CIO Key Insight</div>
+    <div class="brief-body">
+      The 15-point proposal is a setup, not a resolution. Iran publicly saying "negotiating with itself" while Pakistan says they received the proposal = back-channel is open but face-saving needed. Typical pre-ceasefire pattern. Market is front-running the deal. CIO read: <strong style="color:var(--green)">60% probability of ceasefire within 7 days</strong>, 40% Iran rejects and oil snaps back. Portfolio should be asymmetrically positioned for BOTH.
+    </div>
+
+    <div class="key-trade-box">
+      <div class="key-trade-label">▸ The Key Trade</div>
+      <div class="key-trade-text">If Hormuz officially reopens → <em>sell XLE aggressively</em>, <em>buy QQQ/NVDA at full size</em>. Trigger: <em>VIX close &lt; 22</em> AND confirmed Hormuz reopening. Do not pre-empt — wait for both conditions.</div>
+    </div>
+
+    <div class="brief-section-title">Key Events Today</div>
+    <ul class="brief-list">
+      <li>US submitted 15-point ceasefire proposal to Iran via Pakistan intermediaries</li>
+      <li>Iran military: "US is negotiating with itself" — officially denies talks</li>
+      <li>Brent crude −5.9% to $98.28 · WTI −5.1% to $87.68 · first sub-$100 close since war</li>
+      <li>Gold stabilizing ~$4,418 after sharp weekly decline</li>
+      <li>Airlines (UAL/DAL/AAL/ALK) grounded by ongoing Middle East strikes</li>
+      <li>Fed held 3.5-3.75% on March 18. One dissent: Miran wanted cut.</li>
+      <li>VIX 26.06 — gross exposure rule ACTIVE. All new positions at 25% of target.</li>
+    </ul>
+
+    <div class="brief-section-title">Portfolio Actions</div>
+    <ul class="brief-list">
+      <li>TRIM LMT −40% · TRIM RTX −40% — ceasefire proposal = defense peak risk</li>
+      <li>UPGRADE NVDA to BUY · 25% of target size (VIX constraint). Add remaining 75% if VIX &lt; 22</li>
+      <li>HOLD LNG — contracts locked. Don't sell into oil sentiment drag</li>
+      <li>MAINTAIN UAL/DAL shorts — thesis shifted from oil cost → grounded flights</li>
+      <li>WATCH QQQ — no action until VIX &lt; 22 confirmation</li>
+    </ul>
+
+    <div class="brief-section-title">Reflexivity Engine — Day 1 Score</div>
+    <div class="brief-body" style="margin-bottom:8px">
+      Yesterday's energy consensus flag (6/7 agents bullish) triggered correctly. Brent −5.9% today. <strong style="color:var(--green)">Reflexivity engine: 1/1 ✓</strong>
+    </div>
+    <div class="source-pills">
+      <a class="source-pill" href="https://www.reuters.com/business/energy/global-markets-global-markets-2026-03-25/" target="_blank">reuters.com</a>
+      <a class="source-pill" href="https://247wallst.com/investing/2026/03/25/the-sp-500-rips-1-higher-on-hope-for-iran-peace-negotiations-and-oil-falls-below-critical-100-barrel-line/" target="_blank">247wallst.com</a>
+      <a class="source-pill" href="https://timesofindia.indiatimes.com/business/international-business/oil-prices-today-march-25-2026-crude-slips-below-100-amid-ceasefire-hopes-in-iran-brent-down-6-wti-at-87/articleshow/129790011.cms" target="_blank">timesofindia.com</a>
+      <a class="source-pill" href="https://www.cnbc.com/2026/03/24/oil-prices-today-wti-brent-middle-east-iran-war.html" target="_blank">cnbc.com</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- 9. REFLEXIVITY FLAGS -->
+<!-- ══════════════════════════════════════ -->
+<section>
+  <div class="section-label">▸ Reflexivity Flags — Active Warnings</div>
+  <div id="reflex-flags"></div>
+</section>
+
+</div><!-- /container -->
+
+<!-- ══════════════════════════════════════ -->
+<!-- 10. FOOTER -->
+<!-- ══════════════════════════════════════ -->
+<footer class="footer">
+  <div class="footer-main">POWERED BY GEKKO &nbsp;·&nbsp; 25 AGENTS &nbsp;·&nbsp; SELF-IMPROVING DAILY &nbsp;·&nbsp; GREED IS GOOD</div>
+  <div class="footer-legal">Not financial advice. Past performance of AI agents does not guarantee future results. Sources embedded per brief. Updated daily.</div>
+  <div class="footer-legal" style="margin-top:4px;color:#333"><!-- TODO: sources[] array auto-populated from history JSON each run. Add source_urls[] to each agent signal going forward. --></div>
 </footer>
 
-<!-- ══════════════════════════════════════════════════════════
-     JS — RENDER ENGINE
-══════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- DATA & JAVASCRIPT -->
+<!-- ══════════════════════════════════════════════════════════════ -->
 <script>
-(function() {
-  const today = GEKKO_DATA.history[GEKKO_DATA.history.length - 1];
-  const yesterday = GEKKO_DATA.history[GEKKO_DATA.history.length - 2];
+// ── EMBEDDED DATA (from history JSONs) ──────────────────────────
+const DATA_MAR24 = {
+  date:"2026-03-24",regime:"RISK_OFF",vix:26.5,spx:6556.37,spx_change_pct:-0.37,
+  ten_year_yield:4.33,dxy:99.1,brent_oil:99,wti_oil:90.5
+};
+const DATA_MAR25 = {
+  date:"2026-03-25",vix:26.06,spx_prior_close:6556.37,ten_year_yield:4.35,
+  dxy:99.25,brent_oil:98.28,wti_oil:87.68,gold:4418.0,
+  nvda_premarket:177.92,ual_last_close:93.96,lmt_prior_close:611.0
+};
 
-  // ── HELPERS ──
-  function regimeClass(r) {
-    if (!r) return 'neutral';
-    r = r.toUpperCase();
-    if (r.includes('RISK_ON') && !r.includes('OFF')) return 'risk-on';
-    if (r.includes('RISK_OFF') && !r.includes('ON')) return 'risk-off';
-    if (r === 'NEUTRAL_RISK_OFF' || r === 'TRANSITIONAL') return 'neutral';
-    return 'neutral';
-  }
-  function regimeEmoji(r) {
-    const c = regimeClass(r);
-    if (c === 'risk-on') return '🟢';
-    if (c === 'risk-off') return '🔴';
-    return '🟡';
-  }
-  function regimeLabel(r) {
-    if (!r) return 'UNKNOWN';
-    r = r.toUpperCase();
-    if (r === 'RISK_ON') return 'RISK ON';
-    if (r === 'RISK_OFF') return 'RISK OFF';
-    if (r === 'NEUTRAL_RISK_OFF') return 'NEUTRAL / RISK OFF';
-    if (r === 'NEUTRAL') return 'NEUTRAL';
-    return r.replace(/_/g, ' ');
-  }
-  function fmt(v, dec=2) { return v != null ? v.toFixed(dec) : '—'; }
-  function pct(v) { return v != null ? (v >= 0 ? '+' : '') + v.toFixed(2) + '%' : '—'; }
-  function chgClass(v) { if (v == null) return 'flat'; return v > 0 ? 'up' : v < 0 ? 'down' : 'flat'; }
-  function arrowEl(v) {
-    if (v == null) return '<span class="arrow-flat"></span>';
-    return v > 0 ? '<span class="arrow-up"></span>' : v < 0 ? '<span class="arrow-down"></span>' : '<span class="arrow-flat"></span>';
-  }
-  function signalDotClass(sig) {
-    if (!sig) return 'neutral';
-    sig = sig.toUpperCase();
-    if (sig.includes('RISK_ON') && !sig.includes('OFF')) return 'risk-on';
-    if (sig.includes('RISK_OFF') || sig.includes('OFF')) return 'risk-off';
-    return 'neutral';
-  }
+// ── TICKER DATA ─────────────────────────────────────────────────
+const TICKER_ITEMS = [
+  {sym:"SPX",val:"6,556",chg:"+0.97%",up:true},
+  {sym:"VIX",val:"26.06",chg:"-1.7%",up:false},
+  {sym:"10Y",val:"4.35%",chg:"+0.02",up:false},
+  {sym:"DXY",val:"99.25",chg:"+0.15%",up:false},
+  {sym:"BRENT",val:"$98.28",chg:"-5.9%",up:false},
+  {sym:"WTI",val:"$87.68",chg:"-5.1%",up:false},
+  {sym:"GOLD",val:"$4,418",chg:"-0.3%",up:false},
+  {sym:"NVDA",val:"$177.92",chg:"+1.6%",up:true},
+  {sym:"LMT",val:"$611.00",chg:"-1.8%",up:false},
+  {sym:"UAL",val:"$93.96",chg:"-3.2%",up:false},
+  {sym:"FED",val:"3.5-3.75%",chg:"HOLD",up:true},
+];
 
-  // ── HEADER ──
-  document.getElementById('header-date').textContent = today.date;
-  const hRegime = document.getElementById('header-regime');
-  hRegime.textContent = regimeEmoji(today.regime) + ' ' + regimeLabel(today.regime);
-  hRegime.className = 'regime-badge ' + regimeClass(today.regime);
+// ── POSITIONS DATA ───────────────────────────────────────────────
+const LONGS = [
+  {
+    ticker:"NVDA",conviction:68,
+    thesis:"Peace dividend + AI capex intact + double-bottom technical. Add 25% now, full position on VIX < 22.",
+    agents:["AS","CI","SD","DR"],agentColors:["#9b59b6","#00ff88","#f39c12","#9b59b6"],
+    entry:"$175.21",target:"$210+",
+    sources:[
+      {label:"gurufocus.com",url:"https://www.gurufocus.com/news/8736706/nvidia-and-amd-lead-chip-and-ai-stock-rally-amid-eased-usiran-tensions"},
+      {label:"247wallst.com",url:"https://247wallst.com/investing/2026/03/25/the-sp-500-rips-1-higher-on-hope-for-iran-peace-negotiations-and-oil-falls-below-critical-100-barrel-line/"},
+    ]
+  },
+  {
+    ticker:"LNG",conviction:68,
+    thesis:"Cheniere locked European contracts. Oil drop ≠ LNG revenue drop. Market misunderstanding = alpha.",
+    agents:["AC","CI","AH"],agentColors:["#9b59b6","#00ff88","#00ff88"],
+    entry:"$198.40",target:"$240",
+    sources:[
+      {label:"cnbc.com",url:"https://www.cnbc.com/2026/03/24/oil-prices-today-wti-brent-middle-east-iran-war.html"},
+      {label:"timesofindia.com",url:"https://timesofindia.indiatimes.com/business/international-business/oil-prices-today-march-25-2026-crude-slips-below-100-amid-ceasefire-hopes-in-iran-brent-down-6-wti-at-87/articleshow/129790011.cms"},
+    ]
+  },
+  {
+    ticker:"VRTX",conviction:65,
+    thesis:"CF monopoly, zero macro/geopolitical exposure. Ackman-style compounder. Hold.",
+    agents:["BA","AC","CI"],agentColors:["#9b59b6","#9b59b6","#00ff88"],
+    entry:"$512.00",target:"$620",
+    sources:[
+      {label:"investopedia.com",url:"https://www.investopedia.com/stock-market-today-dow-jones-s-and-p-500-03242026-11932938"},
+    ]
+  },
+  {
+    ticker:"AVGO",conviction:60,
+    thesis:"Custom AI silicon. Google/Meta capex = revenue. Peace dividend = multiple expansion on top of growth.",
+    agents:["AS","CI"],agentColors:["#9b59b6","#00ff88"],
+    entry:"—",target:"—",
+    sources:[
+      {label:"gurufocus.com",url:"https://www.gurufocus.com/news/8736706/nvidia-and-amd-lead-chip-and-ai-stock-rally-amid-eased-usiran-tensions"},
+    ]
+  },
+  {
+    ticker:"ISRG",conviction:58,
+    thesis:"Alpha Discovery pick. War = hospitals overwhelmed, robotic surgery backlog. Zero war exposure.",
+    agents:["AH"],agentColors:["#00ff88"],
+    entry:"—",target:"—",
+    sources:[
+      {label:"investopedia.com",url:"https://www.investopedia.com/stock-market-today-dow-jones-s-and-p-500-03242026-11932938"},
+    ]
+  },
+];
 
-  // ── REGIME GAUGE ──
-  const regName = document.getElementById('regime-name');
-  regName.textContent = regimeLabel(today.regime);
-  const rc = regimeClass(today.regime);
-  regName.style.color = rc === 'risk-on' ? 'var(--green)' : rc === 'risk-off' ? 'var(--red)' : 'var(--yellow)';
-  regName.className = 'gauge-regime-name ' + (rc === 'risk-on' ? 'glow-green' : rc === 'risk-off' ? 'glow-red' : 'glow-yellow');
+const SHORTS = [
+  {
+    ticker:"UAL",conviction:55,
+    thesis:"Grounded flights from Middle East strikes. Operational disruption > fuel savings from oil drop.",
+    agents:["IN","CR","CI"],agentColors:["#f39c12","#00ff88","#00ff88"],
+    entry:"$93.96",target:"$72",
+    sources:[
+      {label:"cnbc.com",url:"https://www.cnbc.com/2026/03/24/oil-prices-today-wti-brent-middle-east-iran-war.html"},
+      {label:"247wallst.com",url:"https://247wallst.com/investing/2026/03/25/the-sp-500-rips-1-higher-on-hope-for-iran-peace-negotiations-and-oil-falls-below-critical-100-barrel-line/"},
+    ]
+  },
+  {
+    ticker:"DAL",conviction:55,
+    thesis:"Same thesis as UAL — Middle East strikes grounding flights. Operational disruption ongoing.",
+    agents:["IN","CR"],agentColors:["#f39c12","#00ff88"],
+    entry:"—",target:"—",
+    sources:[
+      {label:"cnbc.com",url:"https://www.cnbc.com/2026/03/24/oil-prices-today-wti-brent-middle-east-iran-war.html"},
+    ]
+  },
+  {
+    ticker:"XLE",conviction:50,
+    thesis:"Conditional only: initiate if ceasefire confirmed. Energy sector would unwind 10-20%.",
+    agents:["DR","CI","EN"],agentColors:["#9b59b6","#00ff88","#f39c12"],
+    entry:"—",target:"—",
+    sources:[
+      {label:"timesofindia.com",url:"https://timesofindia.indiatimes.com/business/international-business/oil-prices-today-march-25-2026-crude-slips-below-100-amid-ceasefire-hopes-in-iran-brent-down-6-wti-at-87/articleshow/129790011.cms"},
+      {label:"reuters.com",url:"https://www.reuters.com/business/energy/global-markets-global-markets-2026-03-25/"},
+    ]
+  },
+];
 
-  const conf = today.regime_confidence || 0.6;
-  document.getElementById('regime-confidence').textContent = 'Confidence: ' + Math.round(conf * 100) + '%';
-  const fill = document.getElementById('confidence-fill');
-  fill.style.width = (conf * 100) + '%';
-  fill.style.background = rc === 'risk-on' ? 'var(--green)' : rc === 'risk-off' ? 'var(--red)' : 'var(--yellow)';
+// ── AGENTS DATA ──────────────────────────────────────────────────
+// sources[] = URLs that informed each agent's signal this week
+// TODO: auto-populate from history JSON source_urls[] field going forward
+const AGENTS = [
+  {id:"cio",name:"THE C.I.O.",initials:"CI",layer:"DECISION",layerKey:"decision",color:"#00ff88",
+   sharpe:0.45,weight:1.05,xpPct:82,level:"ANALYST",sparkSeed:7,
+   thesis:"Prescient ceasefire/reflexivity insight. Peace trade setup. 60/40 probability call.",
+   sources:[
+     {label:"reuters.com",url:"https://www.reuters.com/business/energy/global-markets-global-markets-2026-03-25/"},
+     {label:"cnbc.com",url:"https://www.cnbc.com/2026/03/24/oil-prices-today-wti-brent-middle-east-iran-war.html"},
+     {label:"247wallst.com",url:"https://247wallst.com/investing/2026/03/25/the-sp-500-rips-1-higher-on-hope-for-iran-peace-negotiations-and-oil-falls-below-critical-100-barrel-line/"},
+   ]},
+  {id:"aschenbrenner",name:"ASCHENBRENNER",initials:"AS",layer:"SUPERINVESTOR",layerKey:"superinvestor",color:"#9b59b6",
+   sharpe:0.38,weight:1.05,xpPct:76,level:"ANALYST",sparkSeed:3,
+   thesis:"NVDA hold thesis validated (+1.6% premarket). AI capex decoupled from Iran outcome.",
+   sources:[
+     {label:"gurufocus.com",url:"https://www.gurufocus.com/news/8736706/nvidia-and-amd-lead-chip-and-ai-stock-rally-amid-eased-usiran-tensions"},
+   ]},
+  {id:"volatility",name:"VOLATILITY",initials:"VO",layer:"MACRO",layerKey:"macro",color:"#3498db",
+   sharpe:0.35,weight:1.05,xpPct:71,level:"ANALYST",sparkSeed:5,
+   thesis:"VIX > 25 regime call correct. Gross exposure −20% rule applied precisely.",
+   sources:[
+     {label:"markets.financialcontent.com",url:"https://markets.financialcontent.com/stocks/article/marketminute-2026-3-24-the-vix-spike-volatility-index-surges-to-27-as-risk-off-sentiment-grips-wall-street"},
+     {label:"investopedia.com",url:"https://www.investopedia.com/stock-market-today-dow-jones-s-and-p-500-03242026-11932938"},
+   ]},
+  {id:"geopolitical",name:"GEOPOLITICAL",initials:"GE",layer:"MACRO",layerKey:"macro",color:"#3498db",
+   sharpe:0.30,weight:1.05,xpPct:64,level:"ANALYST",sparkSeed:2,
+   thesis:"Accurately maintained RISK_OFF, identified Iran denial pattern early.",
+   sources:[
+     {label:"reuters.com",url:"https://www.reuters.com/business/energy/global-markets-global-markets-2026-03-25/"},
+     {label:"theguardian.com",url:"https://www.theguardian.com/world/live/2026/mar/25/middle-east-crisis-live-iran-war-oil-prices-more-us-troops-reportedly-deployed-donald-trump-attacks-on-lebanon"},
+     {label:"fortune.com",url:"https://fortune.com/2026/03/23/trump-taco-iran-markets-rally-sp-500-crude-oil-peace-talks/"},
+   ]},
+  {id:"news_sentiment",name:"NEWS SENTINEL",initials:"NS",layer:"MACRO",layerKey:"macro",color:"#3498db",
+   sharpe:0.25,weight:1.05,xpPct:55,level:"ANALYST",sparkSeed:8,
+   thesis:"Correctly flagged narrative vs reality divergence. Market pricing peace, Iran denying.",
+   sources:[
+     {label:"247wallst.com",url:"https://247wallst.com/investing/2026/03/25/the-sp-500-rips-1-higher-on-hope-for-iran-peace-negotiations-and-oil-falls-below-critical-100-barrel-line/"},
+     {label:"fortune.com",url:"https://fortune.com/2026/03/23/trump-taco-iran-markets-rally-sp-500-crude-oil-peace-talks/"},
+   ]},
+  {id:"druckenmiller",name:"THE DRUCKENMILLER",initials:"DR",layer:"SUPERINVESTOR",layerKey:"superinvestor",color:"#9b59b6",
+   sharpe:0.18,weight:1.0,xpPct:45,level:"ROOKIE",sparkSeed:4,
+   thesis:"Pivoting: trim LMT/RTX 40%, start QQQ/NVDA position. Size for asymmetry not certainty.",
+   sources:[
+     {label:"reuters.com",url:"https://www.reuters.com/business/energy/global-markets-global-markets-2026-03-25/"},
+     {label:"247wallst.com",url:"https://247wallst.com/investing/2026/03/25/the-sp-500-rips-1-higher-on-hope-for-iran-peace-negotiations-and-oil-falls-below-critical-100-barrel-line/"},
+   ]},
+  {id:"ackman",name:"THE ACKMAN",initials:"AC",layer:"SUPERINVESTOR",layerKey:"superinvestor",color:"#9b59b6",
+   sharpe:0.15,weight:1.0,xpPct:40,level:"ROOKIE",sparkSeed:6,
+   thesis:"LNG hold not add. Sentiment drag will pressure stock price despite intact fundamentals.",
+   sources:[
+     {label:"cnbc.com",url:"https://www.cnbc.com/2026/03/24/oil-prices-today-wti-brent-middle-east-iran-war.html"},
+     {label:"fortune.com",url:"https://fortune.com/2026/03/23/trump-taco-iran-markets-rally-sp-500-crude-oil-peace-talks/"},
+   ]},
+  {id:"central_bank",name:"THE FED WATCHER",initials:"FW",layer:"MACRO",layerKey:"macro",color:"#3498db",
+   sharpe:0.12,weight:1.0,xpPct:35,level:"ROOKIE",sparkSeed:1,
+   thesis:"Fed held 3.5-3.75%. One dissent (Miran, cut). Dot plot: gradual easing ahead.",
+   sources:[
+     {label:"tradingeconomics.com",url:"https://tradingeconomics.com/united-states/government-bond-yield"},
+     {label:"investopedia.com",url:"https://www.investopedia.com/stock-market-today-dow-jones-s-and-p-500-03242026-11932938"},
+   ]},
+  {id:"baker",name:"BAKER",initials:"BA",layer:"SUPERINVESTOR",layerKey:"superinvestor",color:"#9b59b6",
+   sharpe:0.10,weight:1.0,xpPct:30,level:"ROOKIE",sparkSeed:11,
+   thesis:"VRTX performing exactly as designed. Zero correlation to macro chaos.",
+   sources:[
+     {label:"investopedia.com",url:"https://www.investopedia.com/stock-market-today-dow-jones-s-and-p-500-03242026-11932938"},
+   ]},
+  {id:"dollar",name:"DOLLAR BEAR",initials:"DB",layer:"MACRO",layerKey:"macro",color:"#3498db",
+   sharpe:0.08,weight:1.0,xpPct:28,level:"ROOKIE",sparkSeed:9,
+   thesis:"DXY 99.25. Safe haven demand persisting. Oil-down weakens dollar safe haven bid slightly.",
+   sources:[
+     {label:"tradingeconomics.com",url:"https://tradingeconomics.com/united-states/government-bond-yield"},
+   ]},
+  {id:"china",name:"CHINA DESK",initials:"CH",layer:"MACRO",layerKey:"macro",color:"#3498db",
+   sharpe:0.05,weight:1.0,xpPct:25,level:"ROOKIE",sparkSeed:13,
+   thesis:"PBoC in hold mode. China benefits from cheaper oil if ceasefire holds.",
+   sources:[
+     {label:"reuters.com",url:"https://www.reuters.com/business/energy/global-markets-global-markets-2026-03-25/"},
+   ]},
+  {id:"yield_curve",name:"YIELD CURVE",initials:"YC",layer:"MACRO",layerKey:"macro",color:"#3498db",
+   sharpe:0.03,weight:1.0,xpPct:22,level:"ROOKIE",sparkSeed:12,
+   thesis:"10Y at 4.35%. Spread ~+20bps — not inverted. Fed hold = curve stable.",
+   sources:[
+     {label:"tradingeconomics.com",url:"https://tradingeconomics.com/united-states/government-bond-yield"},
+   ]},
+  {id:"semiconductor",name:"SEMI DESK",initials:"SD",layer:"SECTOR",layerKey:"sector",color:"#f39c12",
+   sharpe:0.0,weight:1.0,xpPct:20,level:"ROOKIE",sparkSeed:18,
+   thesis:"NVDA AVGO LONG. Oil down → inflation ease → Fed cut optionality → tech multiple expansion.",
+   sources:[
+     {label:"gurufocus.com",url:"https://www.gurufocus.com/news/8736706/nvidia-and-amd-lead-chip-and-ai-stock-rally-amid-eased-usiran-tensions"},
+   ]},
+  {id:"relationship_mapper",name:"REL. MAPPER",initials:"RM",layer:"SECTOR",layerKey:"sector",color:"#f39c12",
+   sharpe:0.0,weight:1.0,xpPct:20,level:"ROOKIE",sparkSeed:17,
+   thesis:"Cross-asset: Oil-down → Airlines up (normally) BUT war breaks this. LNG is the exception.",
+   sources:[]},
+  {id:"alpha_discovery",name:"ALPHA HUNTER",initials:"AH",layer:"DECISION",layerKey:"decision",color:"#00ff88",
+   sharpe:0.0,weight:1.0,xpPct:20,level:"ROOKIE",sparkSeed:14,
+   thesis:"Non-consensus picks: ISRG (robotic surgery backlog), LNG misunderstanding, QQQ puts as hedge.",
+   sources:[
+     {label:"investopedia.com",url:"https://www.investopedia.com/stock-market-today-dow-jones-s-and-p-500-03242026-11932938"},
+   ]},
+  {id:"cro",name:"C.R.O.",initials:"CR",layer:"DECISION",layerKey:"decision",color:"#00ff88",
+   sharpe:0.0,weight:1.0,xpPct:20,level:"ROOKIE",sparkSeed:15,
+   thesis:"Adversarial: Iran denial risk, VIX still 26, peace trade crowding. NVDA at 3 agents = WATCH.",
+   sources:[
+     {label:"markets.financialcontent.com",url:"https://markets.financialcontent.com/stocks/article/marketminute-2026-3-24-the-vix-spike-volatility-index-surges-to-27-as-risk-off-sentiment-grips-wall-street"},
+   ]},
+  {id:"biotech",name:"BIOTECH",initials:"BT",layer:"SECTOR",layerKey:"sector",color:"#f39c12",
+   sharpe:0.0,weight:1.0,xpPct:20,level:"ROOKIE",sparkSeed:19,
+   thesis:"VRTX LONG unchanged. Zero macro/geopolitical exposure. CF monopoly permanent.",
+   sources:[]},
+  {id:"consumer",name:"CONSUMER",initials:"CO",layer:"SECTOR",layerKey:"sector",color:"#f39c12",
+   sharpe:0.0,weight:1.0,xpPct:20,level:"ROOKIE",sparkSeed:20,
+   thesis:"Oil −5.9% = consumer tax cut. Airlines NOT a buy — grounding risk > fuel savings.",
+   sources:[
+     {label:"247wallst.com",url:"https://247wallst.com/investing/2026/03/25/the-sp-500-rips-1-higher-on-hope-for-iran-peace-negotiations-and-oil-falls-below-critical-100-barrel-line/"},
+   ]},
+  {id:"industrials",name:"INDUSTRIALS",initials:"IN",layer:"SECTOR",layerKey:"sector",color:"#f39c12",
+   sharpe:0.0,weight:1.0,xpPct:20,level:"ROOKIE",sparkSeed:21,
+   thesis:"Airline shorts: thesis morphed from oil costs → grounded flights. UAL/DAL shorts valid.",
+   sources:[
+     {label:"cnbc.com",url:"https://www.cnbc.com/2026/03/24/oil-prices-today-wti-brent-middle-east-iran-war.html"},
+   ]},
+  {id:"financials",name:"FINANCIALS",initials:"FI",layer:"SECTOR",layerKey:"sector",color:"#f39c12",
+   sharpe:0.0,weight:1.0,xpPct:20,level:"ROOKIE",sparkSeed:22,
+   thesis:"Fed on hold = NIMs stable. If VIX drops below 22, financials benefit from risk-on rotation.",
+   sources:[
+     {label:"tradingeconomics.com",url:"https://tradingeconomics.com/united-states/government-bond-yield"},
+   ]},
+  {id:"emerging_markets",name:"EM DESK",initials:"EM",layer:"MACRO",layerKey:"macro",color:"#3498db",
+   sharpe:0.0,weight:1.0,xpPct:20,level:"ROOKIE",sparkSeed:23,
+   thesis:"DXY 99.25 = mild EM pressure. Oil-down relief for oil-importing EMs (India +700 Sensex).",
+   sources:[]},
+  {id:"commodities",name:"COMMODITIES",initials:"CM",layer:"MACRO",layerKey:"macro",color:"#3498db",
+   sharpe:0.0,weight:1.0,xpPct:20,level:"ROOKIE",sparkSeed:24,
+   thesis:"Brent -5.9% → first close below $100 since war. INFLECTION signal. Gold stabilizing.",
+   sources:[
+     {label:"cnbc.com",url:"https://www.cnbc.com/2026/03/24/oil-prices-today-wti-brent-middle-east-iran-war.html"},
+     {label:"timesofindia.com",url:"https://timesofindia.indiatimes.com/business/international-business/oil-prices-today-march-25-2026-crude-slips-below-100-amid-ceasefire-hopes-in-iran-brent-down-6-wti-at-87/articleshow/129790011.cms"},
+   ]},
+  {id:"autonomous_execution",name:"AUTO EXEC",initials:"AE",layer:"DECISION",layerKey:"decision",color:"#00ff88",
+   sharpe:0.0,weight:1.0,xpPct:20,level:"ROOKIE",sparkSeed:16,
+   thesis:"Executing: TRIM LMT/RTX −40%, UPGRADE NVDA 25% size, MAINTAIN shorts, WATCH QQQ.",
+   sources:[]},
+  {id:"energy",name:"ENERGY DESK",initials:"EN",layer:"SECTOR",layerKey:"sector",color:"#f39c12",
+   sharpe:-0.15,weight:0.95,xpPct:15,level:"ROOKIE",sparkSeed:25,
+   thesis:"Weight reduced. Bullish oil thesis wrong — Brent −5.9%. Reflexivity flag triggered correctly.",
+   sources:[
+     {label:"cnbc.com",url:"https://www.cnbc.com/2026/03/24/oil-prices-today-wti-brent-middle-east-iran-war.html"},
+     {label:"timesofindia.com",url:"https://timesofindia.indiatimes.com/business/international-business/oil-prices-today-march-25-2026-crude-slips-below-100-amid-ceasefire-hopes-in-iran-brent-down-6-wti-at-87/articleshow/129790011.cms"},
+   ]},
+  {id:"institutional_flow",name:"INST. FLOW",initials:"IF",layer:"MACRO",layerKey:"macro",color:"#3498db",
+   sharpe:-0.20,weight:0.95,xpPct:12,level:"ROOKIE",sparkSeed:26,
+   thesis:"Weight reduced. Missed ceasefire proposal signal via diplomatic back-channels.",
+   sources:[
+     {label:"investopedia.com",url:"https://www.investopedia.com/stock-market-today-dow-jones-s-and-p-500-03242026-11932938"},
+   ]},
+];
 
-  document.getElementById('regime-driver').innerHTML = '<strong>Key Driver:</strong> ' + (today.key_driver || '—');
+// ── REFLEXIVITY FLAGS ────────────────────────────────────────────
+const REFLEX_FLAGS = [
+  {
+    title:"YESTERDAY'S FLAG — CONFIRMED ✓",
+    ticker:"Energy Consensus",
+    agentsAgreeing:6,total:7,
+    reversal:"Triggered correctly",
+    note:"6/7 sector agents bullish on energy yesterday. Brent −5.9% today. Reflexivity engine 1/1. Weight: energy desk reduced to 0.95.",
+    status:"confirmed",
+    sources:[
+      {label:"timesofindia.com",url:"https://timesofindia.indiatimes.com/business/international-business/oil-prices-today-march-25-2026-crude-slips-below-100-amid-ceasefire-hopes-in-iran-brent-down-6-wti-at-87/articleshow/129790011.cms"},
+      {label:"cnbc.com",url:"https://www.cnbc.com/2026/03/24/oil-prices-today-wti-brent-middle-east-iran-war.html"},
+    ]
+  },
+  {
+    title:"ACTIVE WATCH — PEACE DIVIDEND CROWDING",
+    ticker:"NVDA / QQQ Long",
+    agentsAgreeing:3,total:25,
+    reversal:"WATCH (threshold: 4 agents)",
+    note:"Druckenmiller + Aschenbrenner + Semi Desk all bullish NVDA on peace narrative. One more agent = crowded trade flag. CRO monitoring. Iran denial could snap this trade violently.",
+    status:"watch",
+    sources:[
+      {label:"gurufocus.com",url:"https://www.gurufocus.com/news/8736706/nvidia-and-amd-lead-chip-and-ai-stock-rally-amid-eased-usiran-tensions"},
+      {label:"fortune.com",url:"https://fortune.com/2026/03/23/trump-taco-iran-markets-rally-sp-500-crude-oil-peace-talks/"},
+    ]
+  },
+];
 
-  // Gauge needle: RISK_ON=left(~-80deg), NEUTRAL=center(0deg), RISK_OFF=right(~+80deg)
-  // Our gauge goes from left (RISK_ON) to right (RISK_OFF) over 180deg
-  // conf 0.6 RISK_OFF → needle at ~60% toward right = +60deg from center
-  let needleAngle = 0; // degrees from vertical (0 = center / NEUTRAL)
-  if (rc === 'risk-off') needleAngle = conf * 85;
-  else if (rc === 'risk-on') needleAngle = -conf * 85;
-  else needleAngle = (conf - 0.5) * 85; // slight tilt for partial
-  // Translate to CSS rotation: our needle starts at 0deg = center
-  // CSS: needle grows upward from bottom center, so 0deg = pointing up = NEUTRAL
-  // Right = RISK_OFF, needs +angle. Gauge arc: left is green (RISK_ON), right is red (RISK_OFF)
-  document.getElementById('gauge-needle').style.transform = `translateX(-50%) rotate(${needleAngle}deg)`;
+// ── HISTORICAL VIX DATA ──────────────────────────────────────────
+const VIX_HISTORY = {
+  labels:["Mar 10","Mar 11","Mar 12","Mar 13","Mar 14","Mar 17","Mar 18","Mar 19","Mar 20","Mar 21","Mar 24","Mar 25"],
+  vix:[18.2,19.5,17.8,16.3,15.1,21.4,28.7,27.3,25.8,26.1,26.5,26.06],
+  regimes:["risk-on","risk-on","risk-on","risk-on","risk-on","risk-off","risk-off","risk-off","risk-off","risk-off","risk-off","risk-off"],
+  spx:[6701,6694,6712,6728,6740,6682,6590,6598,6545,6552,6556,6618],
+};
 
-  // ── AGENT SIGNALS ──
-  if (today.agent_signals) {
-    const grid = document.getElementById('signals-grid');
-    Object.entries(today.agent_signals).forEach(([key, val]) => {
-      const sig = typeof val === 'object' ? val.signal : val;
-      const text = typeof val === 'object' ? val.text : val.replace(/^[A-Z_]+ — /, '');
-      const div = document.createElement('div');
-      div.className = 'signal-row';
-      div.innerHTML = `
-        <div class="signal-dot ${signalDotClass(sig)}"></div>
-        <div>
-          <div class="signal-agent">${key.toUpperCase().replace(/_/g, ' ')}</div>
-          <div class="signal-text">${text}</div>
-        </div>
-      `;
-      grid.appendChild(div);
-    });
-  }
+// ─────────────────────────────────────────────────────────────────
+// RENDER FUNCTIONS
+// ─────────────────────────────────────────────────────────────────
 
-  // ── METRICS BAR ──
-  const metrics = [
-    {
-      label: 'VIX',
-      value: today.vix,
-      prev: yesterday ? yesterday.vix : null,
-      fmt: (v) => fmt(v, 2),
-      invertChange: true // higher VIX = bad = "down" color
-    },
-    {
-      label: 'S&P 500',
-      value: today.spx || yesterday?.spx,
-      prev: yesterday ? yesterday.spx : null,
-      fmt: (v) => v ? v.toLocaleString('en-US', {minimumFractionDigits: 2}) : '—',
-      changeLabel: today.spx_change_pct != null ? pct(today.spx_change_pct) : null
-    },
-    {
-      label: '10Y YIELD',
-      value: today.ten_year_yield,
-      prev: yesterday ? yesterday.ten_year_yield : null,
-      fmt: (v) => fmt(v, 2) + '%',
-      invertChange: true
-    },
-    {
-      label: 'DXY',
-      value: today.dxy,
-      prev: yesterday ? yesterday.dxy : null,
-      fmt: (v) => fmt(v, 2)
-    },
-    {
-      label: 'BRENT',
-      value: today.brent_oil,
-      prev: yesterday ? yesterday.brent_oil : null,
-      fmt: (v) => '$' + fmt(v, 2),
-      invertChange: true
-    }
-  ];
+// Live clock
+function updateClock(){
+  const el=document.getElementById('live-clock');
+  if(!el)return;
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const s=String(now.getSeconds()).padStart(2,'0');
+  const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  el.textContent=`${h}:${m}:${s}`;
+}
+updateClock();
+setInterval(updateClock,1000);
 
-  const bar = document.getElementById('metrics-bar');
-  metrics.forEach(m => {
-    const diff = m.prev != null && m.value != null ? m.value - m.prev : null;
-    const customLabel = m.changeLabel || (diff != null ? (diff >= 0 ? '+' : '') + fmt(diff, 2) : null);
-    let cClass = chgClass(diff);
-    if (m.invertChange && diff != null) cClass = diff > 0 ? 'down' : diff < 0 ? 'up' : 'flat';
+// Ticker
+function renderTicker(){
+  const inner=document.getElementById('ticker-inner');
+  if(!inner)return;
+  const items=[...TICKER_ITEMS,...TICKER_ITEMS];
+  inner.innerHTML=items.map(t=>`
+    <div class="ticker-item">
+      <span class="ticker-sym">${t.sym}</span>
+      <span class="ticker-val">${t.val}</span>
+      <span class="ticker-chg ${t.up?'up':'down'}">${t.chg}</span>
+    </div>
+  `).join('<span class="ticker-sep">·</span>');
+}
+renderTicker();
 
-    const cell = document.createElement('div');
-    cell.className = 'metric-cell';
-    cell.innerHTML = `
-      <div class="metric-label">${m.label}</div>
-      <div class="metric-value" style="color: ${cClass === 'up' ? 'var(--green)' : cClass === 'down' ? 'var(--red)' : 'var(--text)'}">${m.fmt(m.value)}</div>
-      <div class="metric-change ${cClass}">
-        ${arrowEl(cClass === 'up' ? 1 : cClass === 'down' ? -1 : 0)}
-        <span>${customLabel || '—'}</span>
-      </div>
-    `;
-    bar.appendChild(cell);
-  });
+// Source pills helper
+function renderSourcePills(sources){
+  if(!sources||!sources.length)return'';
+  return`<div class="source-pills">${sources.map(s=>`<a class="source-pill" href="${s.url}" target="_blank" rel="noopener">${s.label}</a>`).join('')}</div>`;
+}
 
-  // ── PORTFOLIO STATS ──
-  const statsWrap = document.getElementById('portfolio-stats');
-  const deployed = 100 - (today.cash_reserve || 0);
-  statsWrap.innerHTML = `
-    <div class="stat-chip">💼 ${today.cash_reserve || '—'}% cash reserve</div>
-    <div class="stat-chip">📊 ${deployed}% deployed</div>
-    <div class="stat-chip">🟢 ${today.top_longs?.length || 0} longs</div>
-    <div class="stat-chip">🔴 ${today.top_shorts?.length || 0} shorts</div>
-    <div class="stat-chip">🔁 Reflexivity engine active</div>
-  `;
+// Position cards
+function renderPositionCard(p,type){
+  const isLong=type==='long';
+  const agentIcons=(p.agents||[]).map((a,i)=>`<div class="agent-icon" style="background:${p.agentColors[i]||'#333'}">${a}</div>`).join('');
+  const prices=p.entry&&p.entry!=='—'?`
+    <div class="position-prices">
+      <div class="position-price-item">ENTRY: <span>${p.entry}</span></div>
+      ${p.target&&p.target!=='—'?`<div class="position-price-item">TARGET: <span>${p.target}</span></div>`:''}
+    </div>`:'';
+  return`
+    <div class="position-card ${type}">
+      <div class="position-ticker">${p.ticker}</div>
+      <div class="conviction-pct">CONVICTION: ${p.conviction}%</div>
+      <div class="conviction-bar-wrap"><div class="conviction-bar" style="width:${p.conviction}%"></div></div>
+      <div class="position-thesis">${p.thesis}</div>
+      ${prices}
+      <div class="agent-icons">${agentIcons}</div>
+      ${renderSourcePills(p.sources)}
+    </div>`;
+}
 
-  // ── PICK CARDS ──
-  function renderCard(pick) {
-    const dir = pick.direction?.toUpperCase();
-    const isLong = dir === 'LONG';
-    const conv = pick.conviction > 1 ? pick.conviction : pick.conviction * 100;
-    const div = document.createElement('div');
-    div.className = `pick-card ${isLong ? 'long' : 'short'}`;
-    div.innerHTML = `
-      <div class="card-ticker ${isLong ? 'long' : 'short'}">${pick.ticker}</div>
-      <div class="card-direction ${isLong ? 'long' : 'short'}">${isLong ? '▲ LONG' : '▼ SHORT'}${pick.sizing ? `<span class="sizing-badge">${pick.sizing}</span>` : ''}</div>
-      <div class="conviction-bar-wrap">
-        <div class="conviction-label">
-          <span>CONVICTION</span>
-          <span>${Math.round(conv)}%</span>
-        </div>
-        <div class="conviction-track">
-          <div class="conviction-fill ${isLong ? 'long' : 'short'}" style="width: ${conv}%"></div>
-        </div>
-      </div>
-      <div class="card-thesis">${pick.thesis}</div>
-      ${pick.source ? `<div class="card-source">↳ ${pick.source}</div>` : ''}
-      ${pick.cro_flag ? `<div class="cro-flag">⚠️ ${pick.cro_flag}</div>` : ''}
-    `;
-    return div;
-  }
+document.getElementById('longs-col').innerHTML=LONGS.map(p=>renderPositionCard(p,'long')).join('');
+document.getElementById('shorts-col').innerHTML=SHORTS.map(p=>renderPositionCard(p,'short')).join('');
 
-  const longsGrid = document.getElementById('longs-grid');
-  (today.top_longs || []).forEach(p => longsGrid.appendChild(renderCard(p)));
-
-  const shortsGrid = document.getElementById('shorts-grid');
-  (today.top_shorts || []).forEach(p => shortsGrid.appendChild(renderCard(p)));
-
-  // ── CONVICTION CHART ──
-  const allPicks = [
-    ...(today.top_longs || []).map(p => ({ ...p, direction: 'LONG' })),
-    ...(today.top_shorts || []).map(p => ({ ...p, direction: 'SHORT' }))
-  ].sort((a, b) => {
-    const ca = a.conviction > 1 ? a.conviction : a.conviction * 100;
-    const cb = b.conviction > 1 ? b.conviction : b.conviction * 100;
-    return cb - ca;
-  });
-
-  new Chart(document.getElementById('convictionChart'), {
-    type: 'bar',
-    data: {
-      labels: allPicks.map(p => p.ticker),
-      datasets: [{
-        data: allPicks.map(p => p.conviction > 1 ? p.conviction : p.conviction * 100),
-        backgroundColor: allPicks.map(p => p.direction === 'LONG' ? 'rgba(0,255,136,0.7)' : 'rgba(255,68,68,0.7)'),
-        borderColor: allPicks.map(p => p.direction === 'LONG' ? '#00ff88' : '#ff4444'),
-        borderWidth: 1,
-        borderRadius: 3,
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1a1a1a',
-          borderColor: '#333',
-          borderWidth: 1,
-          titleColor: '#e8e8e8',
-          bodyColor: '#888',
-          callbacks: {
-            label: (ctx) => ` ${ctx.raw}% conviction`
-          }
-        }
-      },
-      scales: {
-        x: {
-          min: 0, max: 100,
-          grid: { color: '#1a1a1a' },
-          ticks: { color: '#555', font: { family: 'JetBrains Mono', size: 11 }, callback: v => v + '%' }
-        },
-        y: {
-          grid: { display: false },
-          ticks: { color: '#888', font: { family: 'JetBrains Mono', size: 12, weight: '600' } }
-        }
-      }
-    }
-  });
-
-  // ── AGENT WEIGHTS CHART ──
-  const sortedAgents = [...ALL_AGENTS].sort((a, b) => b.weight - a.weight);
-  const top3 = sortedAgents.slice(0, 3).map(a => a.name);
-  const bot3 = sortedAgents.slice(-3).map(a => a.name);
-  const agentColors = ALL_AGENTS.map(a => {
-    if (top3.includes(a.name)) return 'rgba(0,255,136,0.75)';
-    if (bot3.includes(a.name)) return 'rgba(255,68,68,0.75)';
-    return 'rgba(100,100,100,0.5)';
-  });
-  const agentBorders = ALL_AGENTS.map(a => {
-    if (top3.includes(a.name)) return '#00ff88';
-    if (bot3.includes(a.name)) return '#ff4444';
-    return '#333';
-  });
-
-  new Chart(document.getElementById('agentChart'), {
-    type: 'bar',
-    data: {
-      labels: ALL_AGENTS.map(a => a.label),
-      datasets: [{
-        data: ALL_AGENTS.map(a => a.weight),
-        backgroundColor: agentColors,
-        borderColor: agentBorders,
-        borderWidth: 1,
-        borderRadius: 3,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        annotation: {},
-        tooltip: {
-          backgroundColor: '#1a1a1a',
-          borderColor: '#333',
-          borderWidth: 1,
-          titleColor: '#e8e8e8',
-          bodyColor: '#888',
-          callbacks: {
-            afterLabel: (ctx) => {
-              const a = ALL_AGENTS[ctx.dataIndex];
-              const flag = top3.includes(a.name) ? ' 🏆 Top performer' : bot3.includes(a.name) ? ' ⚠️ Underperforming' : '';
-              return `Layer: ${a.layer}${flag}`;
-            }
-          }
-        }
-      },
-      scales: {
-        y: {
-          min: 0.8, max: 1.15,
-          grid: { color: '#1a1a1a' },
-          ticks: { color: '#555', font: { family: 'JetBrains Mono', size: 10 } }
-        },
-        x: {
-          grid: { display: false },
-          ticks: { color: '#666', font: { family: 'JetBrains Mono', size: 9 }, maxRotation: 45 }
-        }
-      }
-    }
-  });
-
-  // ── HISTORY CHARTS ──
-  const histDates = GEKKO_DATA.history.map(d => d.date);
-  const histVix = GEKKO_DATA.history.map(d => d.vix);
-  const histYield = GEKKO_DATA.history.map(d => d.ten_year_yield);
-  const histOil = GEKKO_DATA.history.map(d => d.brent_oil);
-  const regimeColors = GEKKO_DATA.history.map(d => {
-    const c = regimeClass(d.regime);
-    return c === 'risk-on' ? 'rgba(0,255,136,0.8)' : c === 'risk-off' ? 'rgba(255,68,68,0.8)' : 'rgba(255,204,0,0.8)';
-  });
-
-  const commonLineOpts = (label, color, data, yLabel) => ({
-    type: 'line',
-    data: {
-      labels: histDates,
-      datasets: [{
-        label,
+// Conviction Matrix (Chart.js)
+(function(){
+  const labels=['NVDA','LNG','VRTX','AVGO','ISRG','XLE','DAL','UAL'];
+  const data=[68,68,65,60,58,-50,-55,-55];
+  const colors=data.map(v=>v>0?'rgba(0,255,136,0.75)':'rgba(255,51,85,0.75)');
+  const borderColors=data.map(v=>v>0?'#00ff88':'#ff3355');
+  const ctx=document.getElementById('convictionChart').getContext('2d');
+  new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'Conviction',
         data,
-        borderColor: color,
-        backgroundColor: color.replace('0.8', '0.1'),
-        pointBackgroundColor: regimeColors,
-        pointRadius: 6,
-        pointHoverRadius: 8,
-        tension: 0.3,
-        fill: true,
-        borderWidth: 2,
+        backgroundColor:colors,
+        borderColor:borderColors,
+        borderWidth:1,
+        borderRadius:2,
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1a1a1a',
-          borderColor: '#333',
-          borderWidth: 1,
-          titleColor: '#e8e8e8',
-          bodyColor: '#888',
-          callbacks: {
-            afterLabel: (ctx) => {
-              const d = GEKKO_DATA.history[ctx.dataIndex];
-              return 'Regime: ' + regimeLabel(d.regime);
-            }
+    options:{
+      indexAxis:'y',
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#0d0d14',
+          borderColor:'#1a1a2e',
+          borderWidth:1,
+          titleColor:'#e8e8e8',
+          bodyColor:'#666',
+          titleFont:{family:'JetBrains Mono',weight:'bold'},
+          callbacks:{
+            label:ctx=>`Conviction: ${Math.abs(ctx.raw)}% ${ctx.raw>0?'LONG':'SHORT'}`
           }
         }
       },
-      scales: {
-        x: {
-          grid: { color: '#1a1a1a' },
-          ticks: { color: '#555', font: { family: 'JetBrains Mono', size: 10 } }
+      scales:{
+        x:{
+          min:-80,max:80,
+          grid:{color:'rgba(255,255,255,0.04)'},
+          ticks:{
+            color:'#666',
+            font:{family:'JetBrains Mono',size:10},
+            callback:v=>`${Math.abs(v)}%`
+          },
+          border:{color:'#1a1a2e'},
         },
-        y: {
-          grid: { color: '#1a1a1a' },
-          ticks: { color: '#555', font: { family: 'JetBrains Mono', size: 10 }, callback: v => yLabel(v) }
+        y:{
+          grid:{display:false},
+          ticks:{color:'#e8e8e8',font:{family:'JetBrains Mono',size:12,weight:'bold'}},
+          border:{color:'#1a1a2e'},
         }
       }
     }
   });
+})();
 
-  new Chart(document.getElementById('vixChart'), commonLineOpts('VIX', 'rgba(255,68,68,0.8)', histVix, v => v.toFixed(1)));
-  new Chart(document.getElementById('yieldChart'), commonLineOpts('10Y Yield', 'rgba(68,136,255,0.8)', histYield, v => v.toFixed(2) + '%'));
-  new Chart(document.getElementById('oilChart'), commonLineOpts('Brent Crude', 'rgba(255,204,0,0.8)', histOil, v => '$' + v.toFixed(0)));
-
-  // ── HISTORY TABLE ──
-  const tbody = document.getElementById('history-tbody');
-  [...GEKKO_DATA.history].reverse().forEach(d => {
-    const rc = regimeClass(d.regime);
-    const color = rc === 'risk-on' ? 'var(--green)' : rc === 'risk-off' ? 'var(--red)' : 'var(--yellow)';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="font-family: var(--mono); color: var(--text-dim);">${d.date}</td>
-      <td style="color: ${color}; font-weight: 700;">${regimeEmoji(d.regime)} ${regimeLabel(d.regime)}</td>
-      <td style="color: var(--red);">${d.vix?.toFixed(2) || '—'}</td>
-      <td style="color: var(--blue);">${d.ten_year_yield?.toFixed(2) || '—'}%</td>
-      <td style="color: var(--yellow);">${d.brent_oil ? '$' + d.brent_oil.toFixed(2) : '—'}</td>
-      <td style="color: var(--text-dim);">${d.dxy?.toFixed(2) || '—'}</td>
-      <td style="color: var(--text-dim); font-size: 11px; max-width: 280px;">${d.key_driver || '—'}</td>
-    `;
-    tbody.appendChild(tr);
+// Sparkline generator
+function generateSparklinePath(seed,sharpe,W=80,H=30){
+  let s=seed*9301+49297;
+  const rng=()=>{s=(s*9301+49297)%233280;return s/233280;};
+  const pts=7;
+  const xs=Array.from({length:pts},(_,i)=>(i/(pts-1))*W);
+  const trend=sharpe*18;
+  const ys=xs.map((_,i)=>{
+    const noise=(rng()-0.5)*14;
+    const t=(i/(pts-1))*trend;
+    return Math.max(3,Math.min(H-3,H/2-t-noise));
   });
+  return xs.map((x,i)=>`${i===0?'M':'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+}
 
-  // ── DAILY BRIEF ──
-  document.getElementById('brief-date').textContent = today.date;
-  const briefBody = document.getElementById('brief-body');
-  const cioText = today.cio_commentary || '';
-  briefBody.innerHTML = cioText.split('. ').map((s, i) => {
-    if (!s.trim()) return '';
-    let html = s.trim();
-    // Highlight key phrases
-    html = html.replace(/\b(NVDA|TLT|ABBV|CMG|CEG|XLE|TUR)\b/g, '<strong>$1</strong>');
-    html = html.replace(/\b(ceasefire|risk|stop loss|VIX)\b/gi, '<span class="neutral">$1</span>');
-    html = html.replace(/\b(reduce|warning|risk down|collapse)\b/gi, '<span class="warning">$1</span>');
-    return `<p>${html}${i < cioText.split('. ').length - 1 ? '.' : ''}</p>`;
-  }).join('');
+// Leaderboard
+let currentSort='sharpe';
+const sortFns={
+  sharpe:(a,b)=>b.sharpe-a.sharpe,
+  weight:(a,b)=>b.weight-a.weight,
+  layer:(a,b)=>a.layer.localeCompare(b.layer),
+  name:(a,b)=>a.name.localeCompare(b.name),
+};
 
-  // ── CRO FLAGS ──
-  const croList = document.getElementById('cro-flags-list');
-  (today.cro_flags || []).forEach(flag => {
-    const div = document.createElement('div');
-    div.className = 'cro-flag-item';
-    div.innerHTML = `<div class="icon">⚠️</div><div class="text">${flag}</div>`;
-    croList.appendChild(div);
-  });
+function getLevelLabel(a){
+  const w=a.weight;
+  if(w>=2.0)return{label:'LEGEND',cls:'legend',pct:99};
+  if(w>=1.5)return{label:'SENIOR',cls:'senior',pct:75};
+  if(w>=1.03)return{label:'ANALYST',cls:'analyst',pct:a.xpPct};
+  return{label:'ROOKIE',cls:'rookie',pct:a.xpPct};
+}
 
-  // ── REFLEXIVITY FLAGS ──
-  const reflexGrid = document.getElementById('reflex-grid');
-  (today.reflexivity_flags || []).forEach(flag => {
-    const div = document.createElement('div');
-    div.className = 'reflex-card';
-    div.innerHTML = `
-      <div class="reflex-header">
-        <div class="reflex-icon">🔁</div>
-        <div>
-          <div class="reflex-ticker">${flag.ticker}</div>
-          <div class="reflex-consensus">${flag.consensus_agents} agents in consensus · CROWDED TRADE</div>
+function getWeightClass(w){
+  if(w>=2.0)return'weight-high';
+  if(w<0.8)return'weight-low';
+  if(w<1.0)return'weight-low';
+  return'weight-normal';
+}
+
+function renderLeaderboard(){
+  const sorted=[...AGENTS].sort(sortFns[currentSort]);
+  const rows=document.getElementById('leaderboard-rows');
+  rows.innerHTML='';
+  sorted.forEach((a,i)=>{
+    const rank=i+1;
+    const isTop3=rank<=3;
+    const isBottom3=rank>sorted.length-3;
+    const rankClass=rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':isBottom3?'rank-dim':'';
+    const rowClass=`agent-row${isTop3?' top3':isBottom3?' bottom3':''}`;
+    const sharpeStr=a.sharpe===0?'0.00':a.sharpe>0?`+${a.sharpe.toFixed(2)}`:`${a.sharpe.toFixed(2)}`;
+    const sharpeClass=a.sharpe>0?'pos':a.sharpe<0?'neg':'zero';
+    const sharpePct=Math.min(Math.abs(a.sharpe)*100,50);
+    const lv=getLevelLabel(a);
+    const sparkPath=generateSparklinePath(a.sparkSeed,a.sharpe);
+    const sparkColor=a.sharpe>=0?'#00ff88':'#ff3355';
+    const layerBadgeClass=`layer-${a.layerKey}`;
+    const wClass=getWeightClass(a.weight);
+    const delay=i*0.03;
+    const row=document.createElement('div');
+    row.className=rowClass;
+    row.style.animationDelay=`${delay}s`;
+    row.innerHTML=`
+      <div class="agent-rank ${rankClass}">${rank}</div>
+      <div class="agent-avatar" style="background:${a.color}22;border-color:${a.color}44">${a.initials}</div>
+      <div class="agent-info">
+        <div class="agent-name ${isTop3?'top3':''}">${a.name}</div>
+        <div><span class="layer-badge ${layerBadgeClass}">${a.layer}</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
+        <div class="sharpe-val ${sharpeClass}">${sharpeStr}</div>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:1px;color:var(--dim)">SHARPE</div>
+      </div>
+      <div class="sharpe-col">
+        <div class="sharpe-bar-outer">
+          <div class="sharpe-bar-center"></div>
+          <div class="sharpe-bar-fill ${sharpeClass}" style="width:${sharpePct}%"></div>
         </div>
       </div>
-      <div class="reflex-warning">${flag.warning}</div>
-    `;
-    reflexGrid.appendChild(div);
+      <div><div class="weight-badge ${wClass}">${a.weight.toFixed(2)}x</div></div>
+      <div class="xp-col">
+        <div class="xp-label ${lv.cls}">${lv.label}</div>
+        <div class="xp-bar-outer"><div class="xp-bar-inner ${lv.cls}" style="width:${lv.pct}%"></div></div>
+      </div>
+      <div class="sparkline-col">
+        <svg class="sparkline-svg" width="80" height="30" viewBox="0 0 80 30">
+          <path class="sparkline-path" d="${sparkPath}" stroke="${sparkColor}" opacity="0.8"/>
+        </svg>
+      </div>
+      <div class="status-dot"></div>`;
+
+    // expandable row for thesis + sources
+    row.style.cursor='pointer';
+    row.addEventListener('click',()=>{
+      const existing=row.nextElementSibling;
+      if(existing&&existing.classList.contains('agent-detail')){
+        existing.remove();return;
+      }
+      const detail=document.createElement('div');
+      detail.className='agent-detail';
+      detail.style.cssText='padding:12px 16px 12px 96px;background:#09090f;border:1px solid var(--border);border-top:none;border-radius:0 0 4px 4px;animation:fadeIn 0.2s ease-out';
+      detail.innerHTML=`
+        <div style="font-size:12px;color:rgba(232,232,232,0.75);line-height:1.6;margin-bottom:8px;font-style:italic">${a.thesis}</div>
+        ${renderSourcePills(a.sources)}`;
+      row.insertAdjacentElement('afterend',detail);
+    });
+    rows.appendChild(row);
   });
+}
 
-  if ((today.reflexivity_flags || []).length === 0) {
-    reflexGrid.innerHTML = '<div style="color: var(--text-dimmer); font-family: var(--mono); font-size: 12px; padding: 20px;">✓ No reflexivity flags active. No crowded trades detected today.</div>';
-  }
-
-  // ══════════════════════════════════════════════════════
-  // AGENT LEADERBOARD
-  // ══════════════════════════════════════════════════════
-
-  // Pseudo-random seeded sparkline generator
-  function lbSparkline(finalValue, seed) {
-    let s = (seed * 1103515245 + 12345) & 0x7fffffff;
-    const rand = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return (s / 0x7fffffff) - 0.5; };
-    const pts = [];
-    for (let i = 0; i < 7; i++) {
-      const progress = i / 6;
-      const noise = rand() * Math.max(Math.abs(finalValue), 0.03) * 0.8;
-      pts.push(parseFloat((finalValue * progress + noise).toFixed(4)));
-    }
-    pts[6] = finalValue;
-    return pts;
-  }
-
-  function lbSvgSparkline(data) {
-    const W = 80, H = 30, PAD = 3;
-    const min = Math.min(...data, 0);
-    const max = Math.max(...data, 0);
-    const range = (max - min) || 0.01;
-    const toX = i => PAD + (i / (data.length - 1)) * (W - PAD * 2);
-    const toY = v => H - PAD - ((v - min) / range) * (H - PAD * 2);
-    const isPos = data[data.length - 1] >= 0;
-    const color = isPos ? '#00ff88' : '#ff4444';
-
-    // Zero line
-    const zeroY = toY(0);
-    const zeroPct = Math.max(0, Math.min(100, ((0 - min) / range * 100)));
-
-    // Build path
-    const linePts = data.map((v, i) => `${toX(i).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
-    // Area fill path
-    const areaPath = `M${toX(0).toFixed(1)},${toY(data[0]).toFixed(1)} ` +
-      data.map((v, i) => `L${toX(i).toFixed(1)},${toY(v).toFixed(1)}`).join(' ') +
-      ` L${toX(data.length-1).toFixed(1)},${zeroY.toFixed(1)} L${toX(0).toFixed(1)},${zeroY.toFixed(1)} Z`;
-
-    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-      <defs>
-        <linearGradient id="sg${seed(data)}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>
-          <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-      <line x1="${PAD}" y1="${zeroY.toFixed(1)}" x2="${W-PAD}" y2="${zeroY.toFixed(1)}" stroke="#333" stroke-width="0.5"/>
-      <path d="${areaPath}" fill="url(#sg${seed(data)})" />
-      <polyline points="${linePts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="${toX(data.length-1).toFixed(1)}" cy="${toY(data[data.length-1]).toFixed(1)}" r="2" fill="${color}"/>
-    </svg>`;
-  }
-  function seed(arr) { return Math.abs(arr.reduce((a,v,i)=>a+Math.round(v*1e4)*i,0)) % 9999; }
-
-  function lbLevel(weight) {
-    if (weight >= 2.0) return 'legend';
-    if (weight >= 1.5) return 'senior';
-    if (weight >= 0.8) return 'analyst';
-    return 'rookie';
-  }
-  function lbLevelLabel(w) {
-    const l = lbLevel(w);
-    return { legend: '★ LEGEND', senior: '◆ SENIOR', analyst: '● ANALYST', rookie: '○ ROOKIE' }[l];
-  }
-  function lbXpPct(weight) {
-    // map 0.3–2.5 to 0–100%
-    return Math.max(0, Math.min(100, ((weight - 0.3) / 2.2) * 100));
-  }
-  function lbTierClass(rank, total) {
-    if (rank === 1) return 'tier-gold';
-    if (rank === 2) return 'tier-silver';
-    if (rank === 3) return 'tier-bronze';
-    if (rank > total - 3) return 'tier-bottom';
-    return '';
-  }
-  function lbMedal(rank) {
-    return { 1: '🥇', 2: '🥈', 3: '🥉' }[rank] || '';
-  }
-  const LB_SHARPE_MAX = 0.22; // normalization ceiling
-
-  let lbCurrentSort = 'sharpe';
-  let lbCurrentData = [...LB_AGENTS]; // already sorted by sharpe desc
-
-  function lbRenderRows(data) {
-    const container = document.getElementById('lb-rows');
-    container.innerHTML = '';
-    const total = data.length;
-    // For rank display always use the sharpe-sorted rank
-    const sharpeRanks = {};
-    [...LB_AGENTS].forEach((a, i) => { sharpeRanks[a.key] = i + 1; });
-
-    data.forEach((agent, idx) => {
-      const displayRank = lbCurrentSort === 'sharpe' ? idx + 1 : sharpeRanks[agent.key];
-      const tierRank = sharpeRanks[agent.key]; // tier always based on sharpe rank
-      const tier = lbTierClass(tierRank, total);
-      const medal = lbMedal(tierRank);
-      const level = lbLevel(agent.weight);
-      const levelLabel = lbLevelLabel(agent.weight);
-      const xpPct = lbXpPct(agent.weight);
-      const sharpeSign = agent.sharpe > 0 ? '+' : '';
-      const sharpeClass = agent.sharpe > 0 ? 'pos' : agent.sharpe < 0 ? 'neg' : 'zero';
-      const sharpePct = Math.min(100, (Math.abs(agent.sharpe) / LB_SHARPE_MAX) * 100);
-
-      // Generate sparkline
-      const sparkData = lbSparkline(agent.sharpe, agent.key.length * 17 + idx * 31);
-
-      const row = document.createElement('div');
-      row.className = `lb-row ${tier}`;
-      row.style.animationDelay = `${idx * 0.04}s`;
-      row.innerHTML = `
-        <div class="lb-rank">
-          ${medal ? `<div class="medal">${medal}</div>` : ''}
-          <div class="num">#${displayRank}</div>
-        </div>
-
-        <div class="lb-name-wrap">
-          <div class="lb-name">${agent.display}</div>
-          <div class="lb-days">${agent.recs} call tracked · Season 1</div>
-        </div>
-
-        <div>
-          <span class="lb-layer ${agent.layer}">${agent.layer.toUpperCase()}</span>
-        </div>
-
-        <div class="lb-sharpe-wrap">
-          <div class="lb-sharpe-header">
-            <span>SHARPE 30D</span>
-            <span class="lb-sharpe-val ${sharpeClass}">${sharpeSign}${agent.sharpe.toFixed(2)}</span>
-          </div>
-          <div class="lb-sharpe-track">
-            <div class="lb-sharpe-fill ${sharpeClass}" data-pct="${sharpePct}"></div>
-          </div>
-        </div>
-
-        <div class="lb-weight-wrap">
-          <div class="lb-weight-num ${level}">${agent.weight.toFixed(2)}×</div>
-          <div class="lb-weight-label">WEIGHT</div>
-        </div>
-
-        <div class="lb-level-wrap">
-          <div class="lb-level-badge ${level}">${levelLabel}</div>
-          <div class="lb-xp-track">
-            <div class="lb-xp-fill ${level}" data-pct="${xpPct}"></div>
-          </div>
-        </div>
-
-        <div class="lb-sparkline">
-          ${lbSvgSparkline(sparkData)}
-        </div>
-      `;
-      container.appendChild(row);
-    });
-
-    // Trigger bar animations after a tick
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        document.querySelectorAll('.lb-sharpe-fill[data-pct]').forEach(el => {
-          el.style.width = el.dataset.pct + '%';
-        });
-        document.querySelectorAll('.lb-xp-fill[data-pct]').forEach(el => {
-          el.style.width = el.dataset.pct + '%';
-        });
-      });
-    });
-  }
-
-  // Sort handler (exposed to global for onclick)
-  window.lbSort = function(by, btn) {
-    document.querySelectorAll('.lb-sort-row .tab').forEach(t => t.classList.remove('active'));
+// Sort tab interaction
+document.querySelectorAll('.sort-tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.sort-tab').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    lbCurrentSort = by;
-    let sorted = [...LB_AGENTS];
-    if (by === 'sharpe')  sorted.sort((a, b) => b.sharpe - a.sharpe);
-    if (by === 'weight')  sorted.sort((a, b) => b.weight - a.weight);
-    if (by === 'name')    sorted.sort((a, b) => a.display.localeCompare(b.display));
-    if (by === 'layer')   sorted.sort((a, b) => a.layer.localeCompare(b.layer) || b.sharpe - a.sharpe);
-    lbCurrentData = sorted;
-    lbRenderRows(sorted);
-  };
+    currentSort=btn.dataset.sort;
+    renderLeaderboard();
+  });
+});
+renderLeaderboard();
 
-  // Initial render
-  lbRenderRows(LB_AGENTS);
+// VIX Chart
+(function(){
+  const ctx=document.getElementById('vixChart').getContext('2d');
+  const {labels,vix}=VIX_HISTORY;
+  const grad=ctx.createLinearGradient(0,0,0,220);
+  grad.addColorStop(0,'rgba(255,51,85,0.3)');
+  grad.addColorStop(0.4,'rgba(255,170,0,0.2)');
+  grad.addColorStop(0.8,'rgba(0,255,136,0.1)');
+  grad.addColorStop(1,'rgba(0,0,0,0)');
 
+  // Color each point
+  const pointColors=vix.map(v=>v>25?'#ff3355':v>15?'#ffaa00':'#00ff88');
+  const lineColors=vix.map(v=>v>25?'#ff3355':v>15?'#ffaa00':'#00ff88');
+
+  new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'VIX',data:vix,borderColor:'#ff3355',borderWidth:2,
+         pointBackgroundColor:pointColors,pointRadius:4,pointHoverRadius:6,
+         fill:true,backgroundColor:grad,tension:0.3},
+        {label:'Danger (25)',data:Array(labels.length).fill(25),borderColor:'rgba(255,51,85,0.4)',
+         borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},
+        {label:'Caution (15)',data:Array(labels.length).fill(15),borderColor:'rgba(255,170,0,0.4)',
+         borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#0d0d14',borderColor:'#1a1a2e',borderWidth:1,
+          titleColor:'#e8e8e8',bodyColor:'#aaa',
+          titleFont:{family:'JetBrains Mono',weight:'bold'},
+          callbacks:{label:ctx=>ctx.dataset.label==='VIX'?`VIX: ${ctx.raw}`:null,filter:i=>i.dataset.label==='VIX'}
+        }
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{family:'JetBrains Mono',size:9}},border:{color:'#1a1a2e'}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{family:'JetBrains Mono',size:9}},border:{color:'#1a1a2e'},min:10,max:35}
+      }
+    }
+  });
 })();
+
+// SPX Chart
+(function(){
+  const ctx=document.getElementById('spxChart').getContext('2d');
+  const {labels,spx,regimes}=VIX_HISTORY;
+  const grad=ctx.createLinearGradient(0,0,0,130);
+  grad.addColorStop(0,'rgba(0,255,136,0.15)');
+  grad.addColorStop(1,'rgba(0,255,136,0)');
+  const pointColors=regimes.map(r=>r==='risk-on'?'#00ff88':'#ff3355');
+  new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{label:'SPX',data:spx,borderColor:'#00ff88',borderWidth:1.5,
+      pointBackgroundColor:pointColors,pointRadius:3,fill:true,backgroundColor:grad,tension:0.3}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:'#0d0d14',borderColor:'#1a1a2e',borderWidth:1,
+        titleColor:'#e8e8e8',bodyColor:'#aaa',
+        titleFont:{family:'JetBrains Mono',weight:'bold'},
+        callbacks:{label:ctx=>`SPX: ${ctx.raw.toLocaleString()}`}
+      }},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#444',font:{family:'JetBrains Mono',size:8}},border:{color:'#1a1a2e'}},
+        y:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#444',font:{family:'JetBrains Mono',size:8},callback:v=>v.toLocaleString()},border:{color:'#1a1a2e'}}
+      }
+    }
+  });
+})();
+
+// Regime Timeline
+(function(){
+  const {labels,regimes}=VIX_HISTORY;
+  const tlEl=document.getElementById('regime-timeline');
+  const dtEl=document.getElementById('regime-dates');
+  tlEl.innerHTML=regimes.map((r,i)=>`
+    <div class="regime-day ${r}" title="${labels[i]} — ${r.replace('-','_').toUpperCase()}">
+      <div class="regime-day-label">${r==='risk-on'?'ON':'OFF'}</div>
+    </div>`).join('');
+  dtEl.innerHTML=labels.map(l=>`<div class="regime-date-label">${l.replace('Mar ','')}</div>`).join('');
+})();
+
+// Reflexivity Flags
+(function(){
+  const el=document.getElementById('reflex-flags');
+  el.innerHTML=REFLEX_FLAGS.map(f=>`
+    <div class="reflex-card" style="${f.status==='confirmed'?'border-left-color:#00ff88;border-color:rgba(0,255,136,0.3)':''}">
+      <div class="reflex-header">
+        <div class="reflex-icon">${f.status==='confirmed'?'✅':'⚠️'}</div>
+        <div class="reflex-title" style="${f.status==='confirmed'?'color:var(--green)':''}">${f.title}</div>
+      </div>
+      <div class="reflex-meta">
+        <div class="reflex-stat">Ticker: <span>${f.ticker}</span></div>
+        <div class="reflex-stat">Agents Agreeing: <span>${f.agentsAgreeing}/${f.total}</span></div>
+        <div class="reflex-stat">Status: <span>${f.reversal}</span></div>
+      </div>
+      <div class="reflex-body">${f.note}</div>
+      ${renderSourcePills(f.sources)}
+    </div>`).join('');
+})();
+
 </script>
 </body>
 </html>
