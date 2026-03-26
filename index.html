@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GEKKO — AI Trading Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg2: #111111;
+      --bg3: #1a1a1a;
+      --bg4: #222222;
+      --border: #2a2a2a;
+      --green: #00ff88;
+      --green-dim: #00cc6a;
+      --green-bg: rgba(0,255,136,0.07);
+      --red: #ff4444;
+      --red-dim: #cc2222;
+      --red-bg: rgba(255,68,68,0.07);
+      --yellow: #ffcc00;
+      --yellow-dim: #cc9900;
+      --yellow-bg: rgba(255,204,0,0.07);
+      --blue: #4488ff;
+      --text: #e8e8e8;
+      --text-dim: #888;
+      --text-dimmer: #555;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .logo {
+      font-family: var(--mono);
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--green);
+      text-shadow: 0 0 30px rgba(0,255,136,0.4);
+    }
+    .logo span { color: var(--text-dim); font-size: 13px; letter-spacing: 0.05em; font-weight: 400; display: block; margin-top: -4px; }
+    .header-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .header-date { font-family: var(--mono); font-size: 13px; color: var(--text-dim); }
+    .regime-badge {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 6px 14px;
+      border-radius: 4px;
+      border: 1px solid;
+    }
+    .regime-badge.risk-off { color: var(--red); border-color: var(--red); background: var(--red-bg); }
+    .regime-badge.risk-on { color: var(--green); border-color: var(--green); background: var(--green-bg); }
+    .regime-badge.neutral { color: var(--yellow); border-color: var(--yellow); background: var(--yellow-bg); }
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* ── SECTION ── */
+    .section { padding: 40px 0; border-bottom: 1px solid var(--border); }
+    .section:last-child { border-bottom: none; }
+    .section-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      color: var(--text-dimmer);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── REGIME GAUGE ── */
+    .regime-gauge-wrap {
+      display: flex;
+      align-items: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+    .gauge-visual {
+      position: relative;
+      width: 220px;
+      height: 120px;
+      flex-shrink: 0;
+    }
+    .gauge-arc {
+      width: 220px;
+      height: 110px;
+      overflow: hidden;
+    }
+    .gauge-ring {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      border-radius: 110px 110px 0 0;
+      background: conic-gradient(from 180deg,
+        var(--green) 0deg 60deg,
+        var(--yellow) 60deg 120deg,
+        var(--red) 120deg 180deg
+      );
+      mask: radial-gradient(circle at center, transparent 70px, black 71px, black 110px);
+      -webkit-mask: radial-gradient(circle at center, transparent 70px, black 71px, black 110px);
+    }
+    .gauge-needle {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform-origin: bottom center;
+      width: 3px;
+      height: 80px;
+      background: var(--text);
+      border-radius: 2px 2px 0 0;
+      box-shadow: 0 0 6px rgba(255,255,255,0.4);
+    }
+    .gauge-center {
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--text);
+      box-shadow: 0 0 8px rgba(255,255,255,0.5);
+    }
+    .gauge-labels {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 4px;
+      margin-top: -2px;
+    }
+    .gauge-labels span { font-family: var(--mono); font-size: 9px; color: var(--text-dimmer); }
+    .gauge-info { flex: 1; min-width: 220px; }
+    .gauge-regime-name {
+      font-family: var(--mono);
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+    .gauge-confidence {
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+    .confidence-bar-wrap { width: 280px; margin-bottom: 12px; }
+    .confidence-bar-track { height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+    .confidence-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+    .gauge-driver {
+      font-size: 13px;
+      color: var(--text-dim);
+      max-width: 500px;
+      line-height: 1.5;
+    }
+    .gauge-driver strong { color: var(--text); }
+
+    /* ── METRICS BAR ── */
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .metric-cell {
+      background: var(--bg2);
+      padding: 20px 24px;
+      position: relative;
+    }
+    .metric-cell:hover { background: var(--bg3); }
+    .metric-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--text-dimmer);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .metric-value {
+      font-family: var(--mono);
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .metric-change {
+      font-family: var(--mono);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .metric-change.up { color: var(--green); }
+    .metric-change.down { color: var(--red); }
+    .metric-change.flat { color: var(--text-dim); }
+    .arrow-up::before { content: '▲'; }
+    .arrow-down::before { content: '▼'; }
+    .arrow-flat::before { content: '●'; }
+
+    /* ── CARDS GRID ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .pick-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .pick-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .pick-card.long::before { background: var(--green); }
+    .pick-card.short::before { background: var(--red); }
+    .pick-card:hover { border-color: #444; transform: translateY(-2px); }
+    .card-ticker {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .card-ticker.long { color: var(--green); }
+    .card-ticker.short { color: var(--red); }
+    .card-direction {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      margin-bottom: 12px;
+    }
+    .card-direction.long { color: var(--green-dim); }
+    .card-direction.short { color: var(--red-dim); }
+    .conviction-bar-wrap { margin-bottom: 12px; }
+    .conviction-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .conviction-track { height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+    .conviction-fill { height: 100%; border-radius: 2px; }
+    .conviction-fill.long { background: var(--green); }
+    .conviction-fill.short { background: var(--red); }
+    .card-thesis {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    .card-source {
+      margin-top: 10px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dimmer);
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+    }
+    .cro-flag {
+      margin-top: 8px;
+      background: rgba(255,204,0,0.1);
+      border: 1px solid rgba(255,204,0,0.3);
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: var(--yellow);
+    }
+    .sizing-badge {
+      display: inline-block;
+      background: var(--bg4);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-left: 8px;
+    }
+
+    /* ── CHARTS ── */
+    .chart-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+    }
+    .chart-title {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+      letter-spacing: 0.05em;
+    }
+    .chart-container { position: relative; }
+
+    /* ── AGENT WEIGHTS ── */
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .agent-row {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: border-color 0.2s;
+    }
+    .agent-row.top { border-color: rgba(0,255,136,0.3); background: rgba(0,255,136,0.04); }
+    .agent-row.bottom { border-color: rgba(255,68,68,0.3); background: rgba(255,68,68,0.04); }
+    .agent-name {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .agent-weight {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .agent-weight.top { color: var(--green); }
+    .agent-weight.bottom { color: var(--red); }
+    .agent-weight.neutral { color: var(--text-dim); }
+    .agent-mini-bar { width: 40px; height: 3px; background: var(--bg4); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+    .agent-mini-fill { height: 100%; border-radius: 2px; }
+
+    /* ── BRIEF ── */
+    .brief-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 32px;
+    }
+    .brief-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .brief-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .brief-tag.cio { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
+    .brief-tag.date { background: var(--bg4); color: var(--text-dim); border: 1px solid var(--border); }
+    .brief-body {
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+    .brief-body p { margin-bottom: 16px; }
+    .brief-body strong { color: var(--green); font-weight: 600; }
+    .brief-body .warning { color: var(--red); }
+    .brief-body .neutral { color: var(--yellow); }
+
+    /* ── AGENT SIGNALS TABLE ── */
+    .signals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 10px;
+    }
+    .signal-row {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .signal-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+    .signal-dot.risk-off { background: var(--red); box-shadow: 0 0 6px var(--red); }
+    .signal-dot.risk-on { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .signal-dot.neutral { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+    .signal-agent { font-family: var(--mono); font-size: 11px; color: var(--text-dimmer); margin-bottom: 2px; }
+    .signal-text { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+
+    /* ── REFLEXIVITY ── */
+    .reflex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .reflex-card {
+      background: var(--yellow-bg);
+      border: 1px solid rgba(255,204,0,0.25);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .reflex-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .reflex-icon { font-size: 20px; }
+    .reflex-ticker {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--yellow);
+    }
+    .reflex-consensus {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--yellow-dim);
+    }
+    .reflex-warning { font-size: 13px; color: var(--text); line-height: 1.5; }
+
+    /* ── CRO FLAGS ── */
+    .cro-flags-list { display: flex; flex-direction: column; gap: 10px; }
+    .cro-flag-item {
+      background: var(--red-bg);
+      border: 1px solid rgba(255,68,68,0.2);
+      border-radius: 6px;
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .cro-flag-item .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .cro-flag-item .text { font-size: 13px; color: var(--text); line-height: 1.5; }
+
+    /* ── HISTORY TABLE ── */
+    .history-table-wrap { overflow-x: auto; }
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .history-table th {
+      text-align: left;
+      padding: 10px 16px;
+      color: var(--text-dimmer);
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+    .history-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .history-table tr:last-child td { border-bottom: none; }
+    .history-table tr:hover td { background: var(--bg3); }
+
+    /* ── TABS ── */
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      padding: 6px 14px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab.active { background: var(--green); color: #000; border-color: var(--green); font-weight: 700; }
+    .tab:hover:not(.active) { border-color: #444; color: var(--text); }
+
+    /* ── FOOTER ── */
+    .footer {
+      padding: 32px 0;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dimmer);
+      letter-spacing: 0.1em;
+    }
+    .footer strong { color: var(--green); }
+    .footer-divider { margin: 0 12px; opacity: 0.3; }
+
+    /* ── STAT CHIPS ── */
+    .stat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .stat-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+
+    /* ── CASH RESERVE ── */
+    .cash-bar-wrap { max-width: 400px; }
+    .cash-bar-label { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+    .cash-bar-track { height: 8px; background: var(--bg4); border-radius: 4px; overflow: hidden; }
+    .cash-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--green), var(--blue)); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .header-inner { flex-direction: column; align-items: flex-start; }
+      .regime-gauge-wrap { flex-direction: column; }
+      .metrics-bar { grid-template-columns: repeat(2, 1fr); }
+      .gauge-info { min-width: unset; width: 100%; }
+      .confidence-bar-wrap { width: 100%; }
+      .logo { font-size: 22px; }
+      .gauge-regime-name { font-size: 24px; }
+    }
+
+    /* ── GLOW EFFECTS ── */
+    .glow-green { text-shadow: 0 0 20px rgba(0,255,136,0.5); }
+    .glow-red { text-shadow: 0 0 20px rgba(255,68,68,0.5); }
+    .glow-yellow { text-shadow: 0 0 20px rgba(255,204,0,0.5); }
+
+    /* ── GRID HELPERS ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── SCANLINE EFFECT ── */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     EMBEDDED DATA
+══════════════════════════════════════════════════════════ -->
+<script>
+const GEKKO_DATA = {
+  history: [
+    {
+      date: "2026-03-24",
+      regime: "RISK_OFF",
+      regime_confidence: 0.85,
+      vix: 26.5,
+      spx: 6556.37,
+      spx_change_pct: -0.37,
+      ten_year_yield: 4.33,
+      dxy: 99.1,
+      brent_oil: 99.0,
+      key_driver: "US-Iran war, Strait of Hormuz partially shut",
+      top_longs: [
+        { ticker: "LMT", conviction: 72, thesis: "Active military conflict, defense spend rises regardless of resolution", direction: "LONG" },
+        { ticker: "RTX", conviction: 72, thesis: "Defense, uncorrelated to Iran peace outcome", direction: "LONG" },
+        { ticker: "LNG", conviction: 68, thesis: "Cheniere — Europe energy security, Hormuz-insulated, locked contracts", direction: "LONG" },
+        { ticker: "VRTX", conviction: 65, thesis: "CF monopoly, zero macro exposure, Ackman-style compounder", direction: "LONG" },
+        { ticker: "NVDA", conviction: 55, thesis: "Hold only — AI capex intact but VIX > 25 prevents adds", direction: "LONG" }
+      ],
+      top_shorts: [
+        { ticker: "UAL", conviction: 58, thesis: "Oil floor at $99, jet fuel cost crush, no pricing power ceiling", direction: "SHORT" },
+        { ticker: "DAL", conviction: 58, thesis: "Same as UAL", direction: "SHORT" }
+      ],
+      agent_weights: {}
+    },
+    {
+      date: "2026-03-25",
+      regime: "RISK_OFF",
+      regime_confidence: 0.65,
+      vix: 26.06,
+      spx: 6556.37,
+      spx_change_pct: 0,
+      ten_year_yield: 4.35,
+      dxy: 99.25,
+      brent_oil: 98.28,
+      key_driver: "15-point ceasefire proposal via Pakistan; Iran denies talks; binary event",
+      top_longs: [
+        { ticker: "NVDA", conviction: 68, thesis: "Peace dividend + AI capex intact + double-bottom technical", direction: "LONG" },
+        { ticker: "LNG", conviction: 68, thesis: "Cheniere locked European contracts. Market misunderstanding = alpha.", direction: "LONG" },
+        { ticker: "VRTX", conviction: 65, thesis: "CF monopoly, zero macro/geopolitical exposure. Hold.", direction: "LONG" },
+        { ticker: "AVGO", conviction: 60, thesis: "Custom AI silicon. Google/Meta capex = revenue. Peace dividend catalyst.", direction: "LONG" },
+        { ticker: "ISRG", conviction: 58, thesis: "Alpha Discovery pick. Robotic surgery backlog building. Zero war exposure.", direction: "LONG" }
+      ],
+      top_shorts: [
+        { ticker: "UAL", conviction: 55, thesis: "Grounded flights from Middle East strikes. Operational disruption > fuel savings.", direction: "SHORT" },
+        { ticker: "DAL", conviction: 55, thesis: "Same as UAL", direction: "SHORT" },
+        { ticker: "XLE", conviction: 50, thesis: "Only initiate if ceasefire confirmed. Energy sector would unwind 10-20%.", direction: "SHORT" }
+      ],
+      agent_weights: {
+        geopolitical: 1.05,
+        news_sentiment: 1.05,
+        volatility: 1.05,
+        cio: 1.05,
+        aschenbrenner: 1.05,
+        energy: 0.95,
+        institutional_flow: 0.95
+      }
+    },
+    {
+      date: "2026-03-26",
+      regime: "NEUTRAL_RISK_OFF",
+      regime_confidence: 0.60,
+      vix: 26.06,
+      spx: null,
+      spx_change_pct: null,
+      ten_year_yield: 4.37,
+      dxy: 99.25,
+      brent_oil: 98.28,
+      key_driver: "US-Iran ceasefire negotiations; binary event risk dominating",
+      top_longs: [
+        { ticker: "NVDA", conviction: 68, sizing: "12%", thesis: "AI super-cycle structural buy; ceasefire = multiple expansion; reflexivity-adjusted sizing", direction: "LONG", source: "Aschenbrenner (1.05x), Semiconductor desk (1.0x)" },
+        { ticker: "ABBV", conviction: 70, sizing: "10%", thesis: "Defensive rotation anchor; dividend floor; FCF visibility; Baker + sector desk pick", direction: "LONG", source: "Baker (1.0x), Healthcare desk (1.0x)" },
+        { ticker: "TLT", conviction: 62, sizing: "10%", thesis: "Druckenmiller ceasefire normalization — oil inflation premium unwinds; 10Y yields normalize", direction: "LONG", source: "Druckenmiller (1.0x)" },
+        { ticker: "CMG", conviction: 64, sizing: "8%", thesis: "Stagflation-resistant quality compounder; pricing power; Ackman lens", direction: "LONG", source: "Ackman (1.0x)" },
+        { ticker: "CEG", conviction: 61, sizing: "7%", thesis: "Nuclear/energy security meta-trade; AI power demand + geopolitical energy security", direction: "LONG", source: "Alpha Discovery (1.0x), Aschenbrenner (1.05x)" },
+        { ticker: "TUR", conviction: 58, sizing: "5%", thesis: "Alpha discovery — geopolitical risk premium unwind on ceasefire; reconstruction trade", direction: "LONG", source: "Alpha Discovery (1.0x)" }
+      ],
+      top_shorts: [
+        { ticker: "XLE", conviction: 60, sizing: "6%", thesis: "Ceasefire = oil -$15-25/barrel; E&P valuations elevated; CRO-reduced from 8%", direction: "SHORT", cro_flag: "DO NOT SIZE LARGE — short squeeze risk if talks collapse", source: "Energy desk (0.95x), CRO-flagged" }
+      ],
+      agent_weights: {
+        cio: 1.05,
+        news_sentiment: 1.05,
+        volatility: 1.05,
+        aschenbrenner: 1.05,
+        geopolitical: 1.05,
+        institutional_flow: 0.95,
+        energy: 0.95
+      },
+      cio_commentary: "Regime is hostage to a single binary event. Portfolio is sized conservatively (58% deployed) to survive a no-deal scenario while capturing significant upside if ceasefire materializes. Key risk: size up aggressively on confirmed ceasefire signal — NVDA to 20%, TLT to 15%, close XLE short. Key risk down: stop losses at -8% on individual names, reduce to 30% deployed if VIX breaks above 35.",
+      cash_reserve: 42,
+      reflexivity_flags: [
+        { ticker: "NVDA/AI", consensus_agents: 4, warning: "Crowded trade — semiconductor desk, Aschenbrenner, Alpha Discovery, CIO all long AI; reduce sizing 30% but maintain long bias" }
+      ],
+      cro_flags: [
+        "Market priced for ~70% ceasefire probability — actual odds closer to 40%; downside gap is large",
+        "NVDA + TLT correlation failure on no-deal scenario — false hedge",
+        "XLE short faces short-squeeze risk if conflict escalates",
+        "Size down 25-30% across all positions; add binary event optionality"
+      ],
+      agent_signals: {
+        central_bank: { signal: "RISK_OFF", text: "Stagflation risk from oil spike; Fed on hold; no cuts until oil normalizes" },
+        geopolitical: { signal: "RISK_OFF", text: "US-Iran conflict; 15-point ceasefire proposal via Pakistan; Iran 'weighing'; binary event" },
+        china: { signal: "RISK_OFF", text: "Heavy oil importer; MSCI Asia -1.3%; demand headwind" },
+        dollar: { signal: "RISK_OFF", text: "DXY elevated from safe-haven demand + yield differential; EM pressure" },
+        yield_curve: { signal: "RISK_OFF", text: "10Y +42bps in 1 month; stagflation geometry; multiple compression ongoing" },
+        commodities: { signal: "RISK_OFF", text: "Brent $98, WTI $87, +$26 YoY; oil is dominant signal" },
+        volatility: { signal: "NEUTRAL", text: "VIX 26 = worry zone, not panic; elevated but not capitulation" },
+        emerging_markets: { signal: "RISK_OFF", text: "MSCI Asia -1.3%; DXY pressure; oil import cost headwind" },
+        news_sentiment: { signal: "NEUTRAL", text: "Wed bullish (ceasefire hope), Thu reversal (Iran uncertainty); whipsaw narrative" },
+        institutional_flow: { signal: "RISK_OFF", text: "Defensives (XLV, XLI) leading; rotation away from energy and cyclicals" }
+      }
+    }
+  ]
+};
+
+// All 25 Darwinian agents with current weights
+const ALL_AGENTS = [
+  // Macro Layer (10)
+  { name: "central_bank",       label: "Central Bank",       weight: 1.00, layer: "macro" },
+  { name: "geopolitical",       label: "Geopolitical",       weight: 1.05, layer: "macro" },
+  { name: "china",              label: "China",              weight: 1.00, layer: "macro" },
+  { name: "dollar",             label: "Dollar/DXY",         weight: 1.00, layer: "macro" },
+  { name: "yield_curve",        label: "Yield Curve",        weight: 1.00, layer: "macro" },
+  { name: "commodities",        label: "Commodities",        weight: 1.00, layer: "macro" },
+  { name: "volatility",         label: "Volatility/VIX",     weight: 1.05, layer: "macro" },
+  { name: "emerging_markets",   label: "Emerging Markets",   weight: 1.00, layer: "macro" },
+  { name: "news_sentiment",     label: "News Sentiment",     weight: 1.05, layer: "macro" },
+  { name: "institutional_flow", label: "Institutional Flow", weight: 0.95, layer: "macro" },
+  // Sector Layer (8)
+  { name: "semiconductor",      label: "Semiconductor",      weight: 1.00, layer: "sector" },
+  { name: "energy",             label: "Energy",             weight: 0.95, layer: "sector" },
+  { name: "biotech",            label: "Biotech",            weight: 1.00, layer: "sector" },
+  { name: "consumer",           label: "Consumer",           weight: 1.00, layer: "sector" },
+  { name: "industrials",        label: "Industrials",        weight: 1.00, layer: "sector" },
+  { name: "financials",         label: "Financials",         weight: 1.00, layer: "sector" },
+  { name: "healthcare",         label: "Healthcare",         weight: 1.00, layer: "sector" },
+  { name: "relationship_map",   label: "Relationship Map",   weight: 1.00, layer: "sector" },
+  // Superinvestors (4)
+  { name: "druckenmiller",      label: "Druckenmiller",      weight: 1.00, layer: "super" },
+  { name: "aschenbrenner",      label: "Aschenbrenner",      weight: 1.05, layer: "super" },
+  { name: "baker",              label: "Baker",              weight: 1.00, layer: "super" },
+  { name: "ackman",             label: "Ackman",             weight: 1.00, layer: "super" },
+  // Meta (3)
+  { name: "cio",                label: "CIO",                weight: 1.05, layer: "meta" },
+  { name: "cro",                label: "CRO (Risk)",         weight: 1.00, layer: "meta" },
+  { name: "alpha_discovery",    label: "Alpha Discovery",    weight: 1.00, layer: "meta" }
+];
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo">
+        GEKKO
+        <span>Autonomous AI Trading Intelligence · 25 Agents</span>
+      </div>
+      <div class="header-right">
+        <div class="live-dot"></div>
+        <div class="header-date" id="header-date">—</div>
+        <div class="regime-badge" id="header-regime">—</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     REGIME GAUGE
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-title">⬡ Regime Intelligence</div>
+    <div class="regime-gauge-wrap">
+      <div class="gauge-visual">
+        <div class="gauge-arc">
+          <div class="gauge-ring"></div>
+        </div>
+        <div class="gauge-needle" id="gauge-needle"></div>
+        <div class="gauge-center"></div>
+        <div class="gauge-labels">
+          <span>RISK ON</span>
+          <span>NEUTRAL</span>
+          <span>RISK OFF</span>
+        </div>
+      </div>
+      <div class="gauge-info">
+        <div class="gauge-regime-name" id="regime-name">—</div>
+        <div class="gauge-confidence" id="regime-confidence">Confidence: —</div>
+        <div class="confidence-bar-wrap">
+          <div class="confidence-bar-track">
+            <div class="confidence-bar-fill" id="confidence-fill" style="width: 0%"></div>
+          </div>
+        </div>
+        <div class="gauge-driver" id="regime-driver"></div>
+      </div>
+    </div>
+
+    <!-- Agent Signals Grid -->
+    <div style="margin-top: 32px;">
+      <div class="section-title" style="margin-bottom: 16px;">Agent Signal Breakdown</div>
+      <div class="signals-grid" id="signals-grid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     KEY METRICS BAR
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-title">📊 Market Vitals</div>
+    <div class="metrics-bar" id="metrics-bar"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     TOP LONGS / SHORTS
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-title">📈 Current Portfolio Positions</div>
+
+    <div class="stat-chips" id="portfolio-stats"></div>
+
+    <div style="margin-bottom: 12px;">
+      <div class="section-title" style="font-size: 9px; color: var(--green); letter-spacing: 0.15em;">LONGS</div>
+    </div>
+    <div class="cards-grid" id="longs-grid"></div>
+
+    <div style="margin: 28px 0 12px;">
+      <div class="section-title" style="font-size: 9px; color: var(--red); letter-spacing: 0.15em;">SHORTS</div>
+    </div>
+    <div class="cards-grid" id="shorts-grid"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     CONVICTION CHART
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-title">🎯 Conviction Map</div>
+    <div class="chart-wrap">
+      <div class="chart-title">ALL POSITIONS · SORTED BY CONVICTION · LONGS GREEN / SHORTS RED</div>
+      <div class="chart-container" style="height: 320px;">
+        <canvas id="convictionChart"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     DARWINIAN AGENT WEIGHTS
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-title">🧬 Darwinian Agent Weights</div>
+    <div class="chart-wrap">
+      <div class="chart-title">25 AGENTS · WEIGHT RANGE 0.3–2.5 · TOP 3 🟢 · BOTTOM 3 🔴</div>
+      <div class="chart-container" style="height: 420px;">
+        <canvas id="agentChart"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     REGIME HISTORY CHART
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-title">📉 Regime History</div>
+    <div class="two-col">
+      <div class="chart-wrap">
+        <div class="chart-title">VIX OVER TIME</div>
+        <div class="chart-container" style="height: 240px;">
+          <canvas id="vixChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">10Y YIELD OVER TIME</div>
+        <div class="chart-container" style="height: 240px;">
+          <canvas id="yieldChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top: 20px;">
+      <div class="chart-wrap">
+        <div class="chart-title">BRENT CRUDE OVER TIME</div>
+        <div class="chart-container" style="height: 200px;">
+          <canvas id="oilChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- History table -->
+    <div style="margin-top: 20px;">
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Regime</th>
+              <th>VIX</th>
+              <th>10Y Yield</th>
+              <th>Brent</th>
+              <th>DXY</th>
+              <th>Key Driver</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     DAILY BRIEF
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-title">📋 CIO Daily Brief</div>
+    <div class="brief-card">
+      <div class="brief-meta">
+        <span class="brief-tag cio">CIO Commentary</span>
+        <span class="brief-tag date" id="brief-date">—</span>
+      </div>
+      <div class="brief-body" id="brief-body"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     CRO FLAGS
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-title">⚠️ CRO Risk Flags</div>
+    <div class="cro-flags-list" id="cro-flags-list"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     REFLEXIVITY FLAGS
+══════════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="section-title">🔁 Reflexivity Engine</div>
+    <div class="reflex-grid" id="reflex-grid"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="container">
+    <div style="margin-bottom: 8px;">
+      <strong>GEKKO</strong>
+      <span class="footer-divider">·</span>
+      25 agents
+      <span class="footer-divider">·</span>
+      Self-improving daily
+      <span class="footer-divider">·</span>
+      Powered by Darwinian evolution
+    </div>
+    <div>
+      4 layers: Macro · Sector · Superinvestors · Decision
+      <span class="footer-divider">·</span>
+      Reflexivity engine active
+      <span class="footer-divider">·</span>
+      Updated daily at market open
+    </div>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════════════════════
+     JS — RENDER ENGINE
+══════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+  const today = GEKKO_DATA.history[GEKKO_DATA.history.length - 1];
+  const yesterday = GEKKO_DATA.history[GEKKO_DATA.history.length - 2];
+
+  // ── HELPERS ──
+  function regimeClass(r) {
+    if (!r) return 'neutral';
+    r = r.toUpperCase();
+    if (r.includes('RISK_ON') && !r.includes('OFF')) return 'risk-on';
+    if (r.includes('RISK_OFF') && !r.includes('ON')) return 'risk-off';
+    if (r === 'NEUTRAL_RISK_OFF' || r === 'TRANSITIONAL') return 'neutral';
+    return 'neutral';
+  }
+  function regimeEmoji(r) {
+    const c = regimeClass(r);
+    if (c === 'risk-on') return '🟢';
+    if (c === 'risk-off') return '🔴';
+    return '🟡';
+  }
+  function regimeLabel(r) {
+    if (!r) return 'UNKNOWN';
+    r = r.toUpperCase();
+    if (r === 'RISK_ON') return 'RISK ON';
+    if (r === 'RISK_OFF') return 'RISK OFF';
+    if (r === 'NEUTRAL_RISK_OFF') return 'NEUTRAL / RISK OFF';
+    if (r === 'NEUTRAL') return 'NEUTRAL';
+    return r.replace(/_/g, ' ');
+  }
+  function fmt(v, dec=2) { return v != null ? v.toFixed(dec) : '—'; }
+  function pct(v) { return v != null ? (v >= 0 ? '+' : '') + v.toFixed(2) + '%' : '—'; }
+  function chgClass(v) { if (v == null) return 'flat'; return v > 0 ? 'up' : v < 0 ? 'down' : 'flat'; }
+  function arrowEl(v) {
+    if (v == null) return '<span class="arrow-flat"></span>';
+    return v > 0 ? '<span class="arrow-up"></span>' : v < 0 ? '<span class="arrow-down"></span>' : '<span class="arrow-flat"></span>';
+  }
+  function signalDotClass(sig) {
+    if (!sig) return 'neutral';
+    sig = sig.toUpperCase();
+    if (sig.includes('RISK_ON') && !sig.includes('OFF')) return 'risk-on';
+    if (sig.includes('RISK_OFF') || sig.includes('OFF')) return 'risk-off';
+    return 'neutral';
+  }
+
+  // ── HEADER ──
+  document.getElementById('header-date').textContent = today.date;
+  const hRegime = document.getElementById('header-regime');
+  hRegime.textContent = regimeEmoji(today.regime) + ' ' + regimeLabel(today.regime);
+  hRegime.className = 'regime-badge ' + regimeClass(today.regime);
+
+  // ── REGIME GAUGE ──
+  const regName = document.getElementById('regime-name');
+  regName.textContent = regimeLabel(today.regime);
+  const rc = regimeClass(today.regime);
+  regName.style.color = rc === 'risk-on' ? 'var(--green)' : rc === 'risk-off' ? 'var(--red)' : 'var(--yellow)';
+  regName.className = 'gauge-regime-name ' + (rc === 'risk-on' ? 'glow-green' : rc === 'risk-off' ? 'glow-red' : 'glow-yellow');
+
+  const conf = today.regime_confidence || 0.6;
+  document.getElementById('regime-confidence').textContent = 'Confidence: ' + Math.round(conf * 100) + '%';
+  const fill = document.getElementById('confidence-fill');
+  fill.style.width = (conf * 100) + '%';
+  fill.style.background = rc === 'risk-on' ? 'var(--green)' : rc === 'risk-off' ? 'var(--red)' : 'var(--yellow)';
+
+  document.getElementById('regime-driver').innerHTML = '<strong>Key Driver:</strong> ' + (today.key_driver || '—');
+
+  // Gauge needle: RISK_ON=left(~-80deg), NEUTRAL=center(0deg), RISK_OFF=right(~+80deg)
+  // Our gauge goes from left (RISK_ON) to right (RISK_OFF) over 180deg
+  // conf 0.6 RISK_OFF → needle at ~60% toward right = +60deg from center
+  let needleAngle = 0; // degrees from vertical (0 = center / NEUTRAL)
+  if (rc === 'risk-off') needleAngle = conf * 85;
+  else if (rc === 'risk-on') needleAngle = -conf * 85;
+  else needleAngle = (conf - 0.5) * 85; // slight tilt for partial
+  // Translate to CSS rotation: our needle starts at 0deg = center
+  // CSS: needle grows upward from bottom center, so 0deg = pointing up = NEUTRAL
+  // Right = RISK_OFF, needs +angle. Gauge arc: left is green (RISK_ON), right is red (RISK_OFF)
+  document.getElementById('gauge-needle').style.transform = `translateX(-50%) rotate(${needleAngle}deg)`;
+
+  // ── AGENT SIGNALS ──
+  if (today.agent_signals) {
+    const grid = document.getElementById('signals-grid');
+    Object.entries(today.agent_signals).forEach(([key, val]) => {
+      const sig = typeof val === 'object' ? val.signal : val;
+      const text = typeof val === 'object' ? val.text : val.replace(/^[A-Z_]+ — /, '');
+      const div = document.createElement('div');
+      div.className = 'signal-row';
+      div.innerHTML = `
+        <div class="signal-dot ${signalDotClass(sig)}"></div>
+        <div>
+          <div class="signal-agent">${key.toUpperCase().replace(/_/g, ' ')}</div>
+          <div class="signal-text">${text}</div>
+        </div>
+      `;
+      grid.appendChild(div);
+    });
+  }
+
+  // ── METRICS BAR ──
+  const metrics = [
+    {
+      label: 'VIX',
+      value: today.vix,
+      prev: yesterday ? yesterday.vix : null,
+      fmt: (v) => fmt(v, 2),
+      invertChange: true // higher VIX = bad = "down" color
+    },
+    {
+      label: 'S&P 500',
+      value: today.spx || yesterday?.spx,
+      prev: yesterday ? yesterday.spx : null,
+      fmt: (v) => v ? v.toLocaleString('en-US', {minimumFractionDigits: 2}) : '—',
+      changeLabel: today.spx_change_pct != null ? pct(today.spx_change_pct) : null
+    },
+    {
+      label: '10Y YIELD',
+      value: today.ten_year_yield,
+      prev: yesterday ? yesterday.ten_year_yield : null,
+      fmt: (v) => fmt(v, 2) + '%',
+      invertChange: true
+    },
+    {
+      label: 'DXY',
+      value: today.dxy,
+      prev: yesterday ? yesterday.dxy : null,
+      fmt: (v) => fmt(v, 2)
+    },
+    {
+      label: 'BRENT',
+      value: today.brent_oil,
+      prev: yesterday ? yesterday.brent_oil : null,
+      fmt: (v) => '$' + fmt(v, 2),
+      invertChange: true
+    }
+  ];
+
+  const bar = document.getElementById('metrics-bar');
+  metrics.forEach(m => {
+    const diff = m.prev != null && m.value != null ? m.value - m.prev : null;
+    const customLabel = m.changeLabel || (diff != null ? (diff >= 0 ? '+' : '') + fmt(diff, 2) : null);
+    let cClass = chgClass(diff);
+    if (m.invertChange && diff != null) cClass = diff > 0 ? 'down' : diff < 0 ? 'up' : 'flat';
+
+    const cell = document.createElement('div');
+    cell.className = 'metric-cell';
+    cell.innerHTML = `
+      <div class="metric-label">${m.label}</div>
+      <div class="metric-value" style="color: ${cClass === 'up' ? 'var(--green)' : cClass === 'down' ? 'var(--red)' : 'var(--text)'}">${m.fmt(m.value)}</div>
+      <div class="metric-change ${cClass}">
+        ${arrowEl(cClass === 'up' ? 1 : cClass === 'down' ? -1 : 0)}
+        <span>${customLabel || '—'}</span>
+      </div>
+    `;
+    bar.appendChild(cell);
+  });
+
+  // ── PORTFOLIO STATS ──
+  const statsWrap = document.getElementById('portfolio-stats');
+  const deployed = 100 - (today.cash_reserve || 0);
+  statsWrap.innerHTML = `
+    <div class="stat-chip">💼 ${today.cash_reserve || '—'}% cash reserve</div>
+    <div class="stat-chip">📊 ${deployed}% deployed</div>
+    <div class="stat-chip">🟢 ${today.top_longs?.length || 0} longs</div>
+    <div class="stat-chip">🔴 ${today.top_shorts?.length || 0} shorts</div>
+    <div class="stat-chip">🔁 Reflexivity engine active</div>
+  `;
+
+  // ── PICK CARDS ──
+  function renderCard(pick) {
+    const dir = pick.direction?.toUpperCase();
+    const isLong = dir === 'LONG';
+    const conv = pick.conviction > 1 ? pick.conviction : pick.conviction * 100;
+    const div = document.createElement('div');
+    div.className = `pick-card ${isLong ? 'long' : 'short'}`;
+    div.innerHTML = `
+      <div class="card-ticker ${isLong ? 'long' : 'short'}">${pick.ticker}</div>
+      <div class="card-direction ${isLong ? 'long' : 'short'}">${isLong ? '▲ LONG' : '▼ SHORT'}${pick.sizing ? `<span class="sizing-badge">${pick.sizing}</span>` : ''}</div>
+      <div class="conviction-bar-wrap">
+        <div class="conviction-label">
+          <span>CONVICTION</span>
+          <span>${Math.round(conv)}%</span>
+        </div>
+        <div class="conviction-track">
+          <div class="conviction-fill ${isLong ? 'long' : 'short'}" style="width: ${conv}%"></div>
+        </div>
+      </div>
+      <div class="card-thesis">${pick.thesis}</div>
+      ${pick.source ? `<div class="card-source">↳ ${pick.source}</div>` : ''}
+      ${pick.cro_flag ? `<div class="cro-flag">⚠️ ${pick.cro_flag}</div>` : ''}
+    `;
+    return div;
+  }
+
+  const longsGrid = document.getElementById('longs-grid');
+  (today.top_longs || []).forEach(p => longsGrid.appendChild(renderCard(p)));
+
+  const shortsGrid = document.getElementById('shorts-grid');
+  (today.top_shorts || []).forEach(p => shortsGrid.appendChild(renderCard(p)));
+
+  // ── CONVICTION CHART ──
+  const allPicks = [
+    ...(today.top_longs || []).map(p => ({ ...p, direction: 'LONG' })),
+    ...(today.top_shorts || []).map(p => ({ ...p, direction: 'SHORT' }))
+  ].sort((a, b) => {
+    const ca = a.conviction > 1 ? a.conviction : a.conviction * 100;
+    const cb = b.conviction > 1 ? b.conviction : b.conviction * 100;
+    return cb - ca;
+  });
+
+  new Chart(document.getElementById('convictionChart'), {
+    type: 'bar',
+    data: {
+      labels: allPicks.map(p => p.ticker),
+      datasets: [{
+        data: allPicks.map(p => p.conviction > 1 ? p.conviction : p.conviction * 100),
+        backgroundColor: allPicks.map(p => p.direction === 'LONG' ? 'rgba(0,255,136,0.7)' : 'rgba(255,68,68,0.7)'),
+        borderColor: allPicks.map(p => p.direction === 'LONG' ? '#00ff88' : '#ff4444'),
+        borderWidth: 1,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a1a1a',
+          borderColor: '#333',
+          borderWidth: 1,
+          titleColor: '#e8e8e8',
+          bodyColor: '#888',
+          callbacks: {
+            label: (ctx) => ` ${ctx.raw}% conviction`
+          }
+        }
+      },
+      scales: {
+        x: {
+          min: 0, max: 100,
+          grid: { color: '#1a1a1a' },
+          ticks: { color: '#555', font: { family: 'JetBrains Mono', size: 11 }, callback: v => v + '%' }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#888', font: { family: 'JetBrains Mono', size: 12, weight: '600' } }
+        }
+      }
+    }
+  });
+
+  // ── AGENT WEIGHTS CHART ──
+  const sortedAgents = [...ALL_AGENTS].sort((a, b) => b.weight - a.weight);
+  const top3 = sortedAgents.slice(0, 3).map(a => a.name);
+  const bot3 = sortedAgents.slice(-3).map(a => a.name);
+  const agentColors = ALL_AGENTS.map(a => {
+    if (top3.includes(a.name)) return 'rgba(0,255,136,0.75)';
+    if (bot3.includes(a.name)) return 'rgba(255,68,68,0.75)';
+    return 'rgba(100,100,100,0.5)';
+  });
+  const agentBorders = ALL_AGENTS.map(a => {
+    if (top3.includes(a.name)) return '#00ff88';
+    if (bot3.includes(a.name)) return '#ff4444';
+    return '#333';
+  });
+
+  new Chart(document.getElementById('agentChart'), {
+    type: 'bar',
+    data: {
+      labels: ALL_AGENTS.map(a => a.label),
+      datasets: [{
+        data: ALL_AGENTS.map(a => a.weight),
+        backgroundColor: agentColors,
+        borderColor: agentBorders,
+        borderWidth: 1,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        annotation: {},
+        tooltip: {
+          backgroundColor: '#1a1a1a',
+          borderColor: '#333',
+          borderWidth: 1,
+          titleColor: '#e8e8e8',
+          bodyColor: '#888',
+          callbacks: {
+            afterLabel: (ctx) => {
+              const a = ALL_AGENTS[ctx.dataIndex];
+              const flag = top3.includes(a.name) ? ' 🏆 Top performer' : bot3.includes(a.name) ? ' ⚠️ Underperforming' : '';
+              return `Layer: ${a.layer}${flag}`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 0.8, max: 1.15,
+          grid: { color: '#1a1a1a' },
+          ticks: { color: '#555', font: { family: 'JetBrains Mono', size: 10 } }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: '#666', font: { family: 'JetBrains Mono', size: 9 }, maxRotation: 45 }
+        }
+      }
+    }
+  });
+
+  // ── HISTORY CHARTS ──
+  const histDates = GEKKO_DATA.history.map(d => d.date);
+  const histVix = GEKKO_DATA.history.map(d => d.vix);
+  const histYield = GEKKO_DATA.history.map(d => d.ten_year_yield);
+  const histOil = GEKKO_DATA.history.map(d => d.brent_oil);
+  const regimeColors = GEKKO_DATA.history.map(d => {
+    const c = regimeClass(d.regime);
+    return c === 'risk-on' ? 'rgba(0,255,136,0.8)' : c === 'risk-off' ? 'rgba(255,68,68,0.8)' : 'rgba(255,204,0,0.8)';
+  });
+
+  const commonLineOpts = (label, color, data, yLabel) => ({
+    type: 'line',
+    data: {
+      labels: histDates,
+      datasets: [{
+        label,
+        data,
+        borderColor: color,
+        backgroundColor: color.replace('0.8', '0.1'),
+        pointBackgroundColor: regimeColors,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        tension: 0.3,
+        fill: true,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a1a1a',
+          borderColor: '#333',
+          borderWidth: 1,
+          titleColor: '#e8e8e8',
+          bodyColor: '#888',
+          callbacks: {
+            afterLabel: (ctx) => {
+              const d = GEKKO_DATA.history[ctx.dataIndex];
+              return 'Regime: ' + regimeLabel(d.regime);
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#1a1a1a' },
+          ticks: { color: '#555', font: { family: 'JetBrains Mono', size: 10 } }
+        },
+        y: {
+          grid: { color: '#1a1a1a' },
+          ticks: { color: '#555', font: { family: 'JetBrains Mono', size: 10 }, callback: v => yLabel(v) }
+        }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('vixChart'), commonLineOpts('VIX', 'rgba(255,68,68,0.8)', histVix, v => v.toFixed(1)));
+  new Chart(document.getElementById('yieldChart'), commonLineOpts('10Y Yield', 'rgba(68,136,255,0.8)', histYield, v => v.toFixed(2) + '%'));
+  new Chart(document.getElementById('oilChart'), commonLineOpts('Brent Crude', 'rgba(255,204,0,0.8)', histOil, v => '$' + v.toFixed(0)));
+
+  // ── HISTORY TABLE ──
+  const tbody = document.getElementById('history-tbody');
+  [...GEKKO_DATA.history].reverse().forEach(d => {
+    const rc = regimeClass(d.regime);
+    const color = rc === 'risk-on' ? 'var(--green)' : rc === 'risk-off' ? 'var(--red)' : 'var(--yellow)';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-family: var(--mono); color: var(--text-dim);">${d.date}</td>
+      <td style="color: ${color}; font-weight: 700;">${regimeEmoji(d.regime)} ${regimeLabel(d.regime)}</td>
+      <td style="color: var(--red);">${d.vix?.toFixed(2) || '—'}</td>
+      <td style="color: var(--blue);">${d.ten_year_yield?.toFixed(2) || '—'}%</td>
+      <td style="color: var(--yellow);">${d.brent_oil ? '$' + d.brent_oil.toFixed(2) : '—'}</td>
+      <td style="color: var(--text-dim);">${d.dxy?.toFixed(2) || '—'}</td>
+      <td style="color: var(--text-dim); font-size: 11px; max-width: 280px;">${d.key_driver || '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // ── DAILY BRIEF ──
+  document.getElementById('brief-date').textContent = today.date;
+  const briefBody = document.getElementById('brief-body');
+  const cioText = today.cio_commentary || '';
+  briefBody.innerHTML = cioText.split('. ').map((s, i) => {
+    if (!s.trim()) return '';
+    let html = s.trim();
+    // Highlight key phrases
+    html = html.replace(/\b(NVDA|TLT|ABBV|CMG|CEG|XLE|TUR)\b/g, '<strong>$1</strong>');
+    html = html.replace(/\b(ceasefire|risk|stop loss|VIX)\b/gi, '<span class="neutral">$1</span>');
+    html = html.replace(/\b(reduce|warning|risk down|collapse)\b/gi, '<span class="warning">$1</span>');
+    return `<p>${html}${i < cioText.split('. ').length - 1 ? '.' : ''}</p>`;
+  }).join('');
+
+  // ── CRO FLAGS ──
+  const croList = document.getElementById('cro-flags-list');
+  (today.cro_flags || []).forEach(flag => {
+    const div = document.createElement('div');
+    div.className = 'cro-flag-item';
+    div.innerHTML = `<div class="icon">⚠️</div><div class="text">${flag}</div>`;
+    croList.appendChild(div);
+  });
+
+  // ── REFLEXIVITY FLAGS ──
+  const reflexGrid = document.getElementById('reflex-grid');
+  (today.reflexivity_flags || []).forEach(flag => {
+    const div = document.createElement('div');
+    div.className = 'reflex-card';
+    div.innerHTML = `
+      <div class="reflex-header">
+        <div class="reflex-icon">🔁</div>
+        <div>
+          <div class="reflex-ticker">${flag.ticker}</div>
+          <div class="reflex-consensus">${flag.consensus_agents} agents in consensus · CROWDED TRADE</div>
+        </div>
+      </div>
+      <div class="reflex-warning">${flag.warning}</div>
+    `;
+    reflexGrid.appendChild(div);
+  });
+
+  if ((today.reflexivity_flags || []).length === 0) {
+    reflexGrid.innerHTML = '<div style="color: var(--text-dimmer); font-family: var(--mono); font-size: 12px; padding: 20px;">✓ No reflexivity flags active. No crowded trades detected today.</div>';
+  }
+
+})();
+</script>
+</body>
+</html>
