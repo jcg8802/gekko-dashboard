@@ -934,14 +934,117 @@ section{margin-bottom:32px}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:#2a2a4e}
 
-/* Responsive */
-@media(max-width:900px){
-  .agent-row{grid-template-columns:28px 36px 1fr 80px 140px;gap:8px}
-  .agent-row .weight-badge,.agent-row .xp-col,.agent-row .sparkline-col,.agent-row .status-dot{display:none}
-  .regime-center{grid-template-columns:1fr;min-height:auto}
-  .regime-panel-center{border-left:none;border-right:none;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+/* ─── BRICK PHONE LOGO ─── */
+.header-brand{display:flex;align-items:center;gap:20px}
+.brick-phone{
+  width:60px;height:110px;
+  flex-shrink:0;
+  filter:drop-shadow(0 0 8px #00ff88);
+}
+@keyframes antenna-pulse{
+  0%,100%{opacity:1}
+  50%{opacity:0.35}
+}
+.antenna-seg{animation:antenna-pulse 2.4s ease-in-out infinite}
+
+/* ─── RESPONSIVE / MOBILE-FIRST ─── */
+@media(max-width:1024px){
+  .grid-3{grid-template-columns:1fr 1fr}
+  .agent-row{grid-template-columns:36px 44px 1fr 100px 160px 80px;gap:10px}
+  .agent-row .xp-col,.agent-row .status-dot{display:none}
+}
+
+@media(max-width:768px){
+  body{overflow-x:hidden}
+  .container{padding:0 16px}
+  .grid-2,.grid-3{grid-template-columns:1fr}
   .positions-grid{grid-template-columns:1fr}
-  .grid-2{grid-template-columns:1fr}
+  .prob-grid{grid-template-columns:1fr 1fr}
+
+  /* Header stacking */
+  .header{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:12px;
+    padding:20px 16px 16px;
+  }
+  .header-right{
+    flex-direction:row;
+    align-items:center;
+    gap:12px;
+    width:100%;
+    flex-wrap:wrap;
+  }
+  .live-clock{font-size:16px}
+  .regime-badge{font-size:11px;padding:8px 14px;min-height:44px;display:flex;align-items:center}
+
+  /* Regime command center stacks */
+  .regime-center{grid-template-columns:1fr;min-height:auto}
+  .regime-panel-center{
+    border-left:none;border-right:none;
+    border-top:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+  }
+  .regime-panel{padding:20px}
+
+  /* Charts shorter */
+  .chart-container{height:200px}
+
+  /* Agent leaderboard — compact: rank + avatar + name + sharpe only */
+  .agent-row{
+    grid-template-columns:28px 36px 1fr 90px;
+    gap:8px;
+    padding:10px 12px;
+    min-height:44px;
+  }
+  .agent-row .weight-badge,
+  .agent-row .xp-col,
+  .agent-row .sparkline-col,
+  .agent-row .status-dot,
+  .agent-row .sharpe-col{display:none}
+  /* Restore sharpe inline as a small badge */
+  .agent-row .sharpe-val{display:block;font-size:13px}
+  .sort-tabs{flex-wrap:wrap;width:100%}
+  .sort-tab{flex:1;text-align:center;padding:8px 6px;min-height:44px;display:flex;align-items:center;justify-content:center}
+
+  /* Ticker readable */
+  .ticker-item{padding:0 18px;font-size:11px;gap:6px}
+
+  /* Brick phone smaller on tablet */
+  .brick-phone{width:46px;height:85px}
+  .header-brand{gap:14px}
+}
+
+@media(max-width:480px){
+  body{overflow-x:hidden}
+  .container{padding:0 12px}
+  section{margin-bottom:20px}
+  .header{padding:14px 12px 12px}
+  .header-brand{gap:10px}
+  .brick-phone{width:36px;height:66px}
+  .gekko-logo{font-size:clamp(22px,8vw,38px);letter-spacing:0.2em}
+  .header-sub{font-size:8px;letter-spacing:1px}
+  .live-clock{font-size:14px}
+  .regime-badge{font-size:10px;padding:6px 10px}
+  .card{padding:14px}
+  .chart-container{height:180px}
+  .regime-panel{padding:14px}
+  .regime-panel-center{padding:16px}
+  .regime-word{font-size:clamp(18px,6vw,36px)}
+  .section-label{font-size:9px;letter-spacing:2px}
+  .position-ticker{font-size:20px}
+  .ticker-item{padding:0 12px;font-size:10px;gap:4px}
+  .ticker-bar{height:40px}
+  .sort-tab{padding:6px 8px;font-size:9px;min-height:44px}
+  .prob-pct{font-size:22px}
+  .prob-grid{gap:8px}
+  .pulse-container{width:80px;height:80px}
+  .agent-avatar{width:32px;height:32px;font-size:9px}
+  .agent-rank{font-size:14px}
+  .agent-row{gap:6px}
+  .leaderboard-title{font-size:clamp(16px,5vw,28px);letter-spacing:2px}
+  .leaderboard-header{padding:20px 16px}
+  .darwinian-callout{padding:14px 16px}
 }
 </style>
 </head>
@@ -952,8 +1055,53 @@ section{margin-bottom:32px}
 <!-- ══════════════════════════════════════ -->
 <header class="header">
   <div class="header-left">
-    <div class="gekko-logo">G E K K O</div>
-    <div class="header-sub">25-AGENT AUTONOMOUS TRADING INTELLIGENCE &nbsp;·&nbsp; SEASON 1 &nbsp;·&nbsp; DAY 3</div>
+    <div class="header-brand">
+      <!-- Gordon Gekko DynaTAC 8000X Brick Phone -->
+      <svg class="brick-phone" viewBox="0 0 60 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <!-- Antenna -->
+        <rect class="antenna-seg" x="43" y="0" width="5" height="36" rx="2.5" fill="#00ff88"/>
+        <rect class="antenna-seg" x="44.5" y="34" width="2" height="6" rx="1" fill="#00ff88" opacity="0.6"/>
+        <!-- Main body -->
+        <rect x="6" y="18" width="46" height="86" rx="5" fill="#050a08" stroke="#00ff88" stroke-width="1.5"/>
+        <!-- Body top-edge highlight -->
+        <rect x="6" y="18" width="46" height="4" rx="5" fill="#00ff88" opacity="0.08"/>
+        <!-- Speaker grille -->
+        <rect x="16" y="25" width="26" height="5" rx="1.5" fill="#00ff88" opacity="0.12" stroke="#00ff88" stroke-width="0.8"/>
+        <line x1="19" y1="27.5" x2="39" y2="27.5" stroke="#00ff88" stroke-width="0.8" opacity="0.5"/>
+        <line x1="22" y1="27.5" x2="22" y2="27.5" stroke="#00ff88" stroke-width="0" opacity="0"/>
+        <!-- Earpiece slit lines -->
+        <line x1="18" y1="26.5" x2="40" y2="26.5" stroke="#00ff88" stroke-width="0.4" opacity="0.3"/>
+        <line x1="18" y1="28.5" x2="40" y2="28.5" stroke="#00ff88" stroke-width="0.4" opacity="0.3"/>
+        <!-- Screen -->
+        <rect x="12" y="34" width="34" height="20" rx="2" fill="#001a0a" stroke="#00ff88" stroke-width="0.8" opacity="0.9"/>
+        <rect x="15" y="38" width="22" height="2.5" rx="1" fill="#00ff88" opacity="0.45"/>
+        <rect x="15" y="42.5" width="15" height="2" rx="1" fill="#00ff88" opacity="0.25"/>
+        <rect x="15" y="46" width="10" height="2" rx="1" fill="#00ff88" opacity="0.15"/>
+        <!-- Keypad — 3 columns × 4 rows -->
+        <!-- Row 1 -->
+        <rect x="11" y="60" width="10" height="6" rx="1.5" fill="#00ff88" opacity="0.22"/>
+        <rect x="24" y="60" width="10" height="6" rx="1.5" fill="#00ff88" opacity="0.22"/>
+        <rect x="37" y="60" width="10" height="6" rx="1.5" fill="#00ff88" opacity="0.22"/>
+        <!-- Row 2 -->
+        <rect x="11" y="69" width="10" height="6" rx="1.5" fill="#00ff88" opacity="0.17"/>
+        <rect x="24" y="69" width="10" height="6" rx="1.5" fill="#00ff88" opacity="0.17"/>
+        <rect x="37" y="69" width="10" height="6" rx="1.5" fill="#00ff88" opacity="0.17"/>
+        <!-- Row 3 -->
+        <rect x="11" y="78" width="10" height="6" rx="1.5" fill="#00ff88" opacity="0.13"/>
+        <rect x="24" y="78" width="10" height="6" rx="1.5" fill="#00ff88" opacity="0.13"/>
+        <rect x="37" y="78" width="10" height="6" rx="1.5" fill="#00ff88" opacity="0.13"/>
+        <!-- Row 4 (call / end) -->
+        <rect x="11" y="87" width="10" height="6" rx="1.5" fill="#00ff88" opacity="0.28"/>
+        <rect x="24" y="87" width="10" height="6" rx="1.5" fill="#00ff88" opacity="0.09"/>
+        <rect x="37" y="87" width="10" height="6" rx="1.5" fill="#ff3355" opacity="0.35"/>
+        <!-- Bottom mic bar -->
+        <rect x="18" y="97" width="22" height="4" rx="2" fill="#00ff88" opacity="0.1" stroke="#00ff88" stroke-width="0.5"/>
+      </svg>
+      <div>
+        <div class="gekko-logo">G E K K O</div>
+        <div class="header-sub">25-AGENT AUTONOMOUS TRADING INTELLIGENCE &nbsp;·&nbsp; SEASON 1 &nbsp;·&nbsp; DAY 3</div>
+      </div>
+    </div>
   </div>
   <div class="header-right">
     <div class="live-clock" id="live-clock">--:--:--</div>
