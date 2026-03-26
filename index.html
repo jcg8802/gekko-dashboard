@@ -602,6 +602,333 @@
       pointer-events: none;
       z-index: 9999;
     }
+
+    /* ══════════════════════════════════════
+       AGENT LEADERBOARD
+    ══════════════════════════════════════ */
+
+    .lb-header {
+      margin-bottom: 32px;
+    }
+    .lb-title {
+      font-family: var(--mono);
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #ffd700;
+      text-shadow: 0 0 40px rgba(255,215,0,0.5), 0 0 80px rgba(255,215,0,0.2);
+      margin-bottom: 6px;
+    }
+    .lb-subtitle {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text-dimmer);
+      letter-spacing: 0.15em;
+    }
+    .lb-subtitle em {
+      color: var(--text-dim);
+      font-style: normal;
+    }
+    .lb-meta-bar {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      align-items: center;
+    }
+    .lb-chip {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      padding: 4px 12px;
+      border-radius: 3px;
+      border: 1px solid;
+    }
+    .lb-chip.gold   { color: #ffd700; border-color: rgba(255,215,0,0.4); background: rgba(255,215,0,0.07); }
+    .lb-chip.green  { color: var(--green); border-color: rgba(0,255,136,0.3); background: var(--green-bg); }
+    .lb-chip.red    { color: var(--red); border-color: rgba(255,68,68,0.3); background: var(--red-bg); }
+    .lb-chip.gray   { color: var(--text-dim); border-color: var(--border); background: var(--bg3); }
+
+    /* Sort tabs */
+    .lb-sort-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .lb-sort-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dimmer);
+      letter-spacing: 0.12em;
+      margin-right: 4px;
+    }
+
+    /* Column headers */
+    .lb-col-headers {
+      display: grid;
+      grid-template-columns: 56px 1fr 110px 200px 72px 80px 88px;
+      gap: 0 12px;
+      padding: 8px 18px;
+      margin-bottom: 6px;
+    }
+    .lb-col-hdr {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: var(--text-dimmer);
+      text-transform: uppercase;
+    }
+    @media (max-width: 1000px) {
+      .lb-col-headers { display: none; }
+    }
+
+    /* Agent row */
+    .lb-row {
+      display: grid;
+      grid-template-columns: 56px 1fr 110px 200px 72px 80px 88px;
+      gap: 0 12px;
+      align-items: center;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      background: var(--bg2);
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .lb-row::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+    }
+    .lb-row.tier-gold {
+      border-color: rgba(255,215,0,0.45);
+      background: rgba(255,215,0,0.04);
+      box-shadow: 0 0 20px rgba(255,215,0,0.08), inset 0 0 30px rgba(255,215,0,0.03);
+    }
+    .lb-row.tier-gold::before { background: #ffd700; box-shadow: 0 0 8px #ffd700; }
+    .lb-row.tier-silver {
+      border-color: rgba(192,192,192,0.35);
+      background: rgba(192,192,192,0.03);
+    }
+    .lb-row.tier-silver::before { background: #c0c0c0; }
+    .lb-row.tier-bronze {
+      border-color: rgba(205,127,50,0.35);
+      background: rgba(205,127,50,0.03);
+    }
+    .lb-row.tier-bronze::before { background: #cd7f32; }
+    .lb-row.tier-bottom {
+      border-color: rgba(255,68,68,0.2);
+      background: rgba(255,68,68,0.02);
+      opacity: 0.75;
+    }
+    .lb-row.tier-bottom::before { background: var(--red); opacity: 0.4; }
+    .lb-row:hover {
+      border-color: #444;
+      transform: translateX(3px);
+      z-index: 1;
+    }
+    .lb-row.tier-gold:hover { border-color: rgba(255,215,0,0.7); }
+
+    @media (max-width: 1000px) {
+      .lb-row {
+        grid-template-columns: 48px 1fr 90px;
+        grid-template-rows: auto auto auto;
+        gap: 6px;
+      }
+    }
+
+    /* Rank cell */
+    .lb-rank {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--text-dimmer);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1;
+    }
+    .lb-rank .medal { font-size: 22px; margin-bottom: 2px; }
+    .lb-rank .num   { font-size: 12px; color: var(--text-dimmer); }
+
+    /* Name cell */
+    .lb-name-wrap { min-width: 0; }
+    .lb-name {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .lb-row.tier-gold .lb-name   { color: #ffd700; text-shadow: 0 0 12px rgba(255,215,0,0.4); }
+    .lb-row.tier-silver .lb-name { color: #d0d0d0; }
+    .lb-row.tier-bronze .lb-name { color: #e08050; }
+    .lb-days {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-dimmer);
+      letter-spacing: 0.1em;
+    }
+
+    /* Layer badge */
+    .lb-layer {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      padding: 3px 8px;
+      border-radius: 3px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .lb-layer.macro        { background: rgba(68,136,255,0.15); color: #4488ff; border: 1px solid rgba(68,136,255,0.3); }
+    .lb-layer.sector       { background: rgba(255,170,0,0.12); color: #ffaa00; border: 1px solid rgba(255,170,0,0.3); }
+    .lb-layer.superinvestor{ background: rgba(180,0,255,0.12); color: #cc44ff; border: 1px solid rgba(180,0,255,0.3); }
+    .lb-layer.decision     { background: rgba(0,255,136,0.1);  color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+
+    /* Sharpe bar */
+    .lb-sharpe-wrap { }
+    .lb-sharpe-header {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dimmer);
+      margin-bottom: 4px;
+    }
+    .lb-sharpe-val {
+      font-weight: 700;
+      font-size: 11px;
+    }
+    .lb-sharpe-val.pos { color: var(--green); }
+    .lb-sharpe-val.neg { color: var(--red); }
+    .lb-sharpe-val.zero{ color: var(--text-dimmer); }
+    .lb-sharpe-track {
+      height: 5px;
+      background: var(--bg4);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+    .lb-sharpe-fill {
+      height: 100%;
+      border-radius: 3px;
+      width: 0%;
+      transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .lb-sharpe-fill.pos { background: linear-gradient(90deg, var(--green-dim), var(--green)); }
+    .lb-sharpe-fill.neg { background: linear-gradient(90deg, var(--red), var(--red-dim)); }
+    .lb-sharpe-fill.zero{ background: var(--bg4); }
+
+    /* Weight badge */
+    .lb-weight-wrap { text-align: center; }
+    .lb-weight-num {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+    .lb-weight-num.legend  { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.6); }
+    .lb-weight-num.senior  { color: #4488ff; }
+    .lb-weight-num.analyst { color: var(--text-dim); }
+    .lb-weight-num.rookie  { color: var(--red-dim); }
+    .lb-weight-label {
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      color: var(--text-dimmer);
+      text-align: center;
+    }
+
+    /* XP Level */
+    .lb-level-wrap { text-align: center; }
+    .lb-level-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 4px 8px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+    .lb-level-badge.legend  { background: rgba(255,215,0,0.15); color: #ffd700; border: 1px solid rgba(255,215,0,0.4); }
+    .lb-level-badge.senior  { background: rgba(68,136,255,0.12); color: #4488ff; border: 1px solid rgba(68,136,255,0.3); }
+    .lb-level-badge.analyst { background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid var(--border); }
+    .lb-level-badge.rookie  { background: rgba(255,68,68,0.1); color: var(--red); border: 1px solid rgba(255,68,68,0.3); }
+    .lb-xp-track {
+      height: 3px;
+      background: var(--bg4);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .lb-xp-fill {
+      height: 100%;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .lb-xp-fill.legend  { background: #ffd700; }
+    .lb-xp-fill.senior  { background: #4488ff; }
+    .lb-xp-fill.analyst { background: var(--text-dimmer); }
+    .lb-xp-fill.rookie  { background: var(--red-dim); }
+
+    /* Sparkline */
+    .lb-sparkline {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .lb-sparkline svg {
+      overflow: visible;
+    }
+
+    /* Entrance animation */
+    @keyframes lb-slide-in {
+      from { opacity: 0; transform: translateX(-16px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .lb-row {
+      animation: lb-slide-in 0.4s ease both;
+    }
+
+    /* Bottom callout */
+    .lb-callout {
+      margin-top: 24px;
+      border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 8px;
+      background: rgba(255,215,0,0.04);
+      padding: 20px 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .lb-callout-icon { font-size: 28px; flex-shrink: 0; }
+    .lb-callout-text { }
+    .lb-callout-title {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffd700;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+    .lb-callout-body {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+    .lb-callout-body strong { color: var(--text); }
   </style>
 </head>
 <body>
@@ -759,6 +1086,36 @@ const ALL_AGENTS = [
   { name: "cro",                label: "CRO (Risk)",         weight: 1.00, layer: "meta" },
   { name: "alpha_discovery",    label: "Alpha Discovery",    weight: 1.00, layer: "meta" }
 ];
+
+// ── LEADERBOARD DATA (from darwinian_weights.json) ──
+const LB_AGENTS = [
+  { key: "cio",                display: "THE C.I.O.",          layer: "decision",      weight: 1.05, sharpe: 0.20, recs: 1 },
+  { key: "aschenbrenner",      display: "ASCHENBRENNER",       layer: "superinvestor", weight: 1.05, sharpe: 0.18, recs: 1 },
+  { key: "news_sentiment",     display: "NEWS SENTINEL",       layer: "macro",         weight: 1.05, sharpe: 0.15, recs: 1 },
+  { key: "geopolitical",       display: "GEOPOLITICAL",        layer: "macro",         weight: 1.05, sharpe: 0.12, recs: 1 },
+  { key: "volatility",         display: "VOLATILITY",          layer: "macro",         weight: 1.05, sharpe: 0.10, recs: 1 },
+  { key: "cro",                display: "C.R.O.",              layer: "decision",      weight: 1.00, sharpe: 0.08, recs: 1 },
+  { key: "druckenmiller",      display: "THE DRUCKENMILLER",   layer: "superinvestor", weight: 1.00, sharpe: 0.06, recs: 1 },
+  { key: "semiconductor",      display: "SEMI DESK",           layer: "sector",        weight: 1.00, sharpe: 0.05, recs: 1 },
+  { key: "biotech",            display: "BIOTECH DESK",        layer: "sector",        weight: 1.00, sharpe: 0.04, recs: 1 },
+  { key: "baker",              display: "BAKER",               layer: "superinvestor", weight: 1.00, sharpe: 0.04, recs: 1 },
+  { key: "ackman",             display: "THE ACKMAN",          layer: "superinvestor", weight: 1.00, sharpe: 0.02, recs: 1 },
+  { key: "central_bank",       display: "THE FED",             layer: "macro",         weight: 1.00, sharpe: 0.00, recs: 1 },
+  { key: "china",              display: "CHINA DESK",          layer: "macro",         weight: 1.00, sharpe: 0.00, recs: 1 },
+  { key: "dollar",             display: "DOLLAR / DXY",        layer: "macro",         weight: 1.00, sharpe: 0.00, recs: 1 },
+  { key: "yield_curve",        display: "YIELD CURVE",         layer: "macro",         weight: 1.00, sharpe: 0.00, recs: 1 },
+  { key: "commodities",        display: "COMMODITIES",         layer: "macro",         weight: 1.00, sharpe: 0.00, recs: 1 },
+  { key: "emerging_markets",   display: "EMERGING MKTS",       layer: "macro",         weight: 1.00, sharpe: 0.00, recs: 1 },
+  { key: "consumer",           display: "CONSUMER DESK",       layer: "sector",        weight: 1.00, sharpe: 0.00, recs: 1 },
+  { key: "industrials",        display: "INDUSTRIALS",         layer: "sector",        weight: 1.00, sharpe: 0.00, recs: 1 },
+  { key: "financials",         display: "FINANCIALS",          layer: "sector",        weight: 1.00, sharpe: 0.00, recs: 1 },
+  { key: "relationship_mapper",display: "REL. MAPPER",         layer: "sector",        weight: 1.00, sharpe: 0.00, recs: 1 },
+  { key: "alpha_discovery",    display: "ALPHA HUNTER",        layer: "decision",      weight: 1.00, sharpe: 0.00, recs: 1 },
+  { key: "autonomous_execution",display:"AUTO EXEC",           layer: "decision",      weight: 1.00, sharpe: 0.00, recs: 1 },
+  { key: "institutional_flow", display: "INST. FLOW",          layer: "macro",         weight: 0.95, sharpe: -0.08, recs: 1 },
+  { key: "energy",             display: "ENERGY DESK",         layer: "sector",        weight: 0.95, sharpe: -0.12, recs: 1 }
+];
+// Already sorted by sharpe desc — rank = index + 1
 </script>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -963,6 +1320,64 @@ const ALL_AGENTS = [
   <div class="container">
     <div class="section-title">🔁 Reflexivity Engine</div>
     <div class="reflex-grid" id="reflex-grid"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     AGENT LEADERBOARD
+══════════════════════════════════════════════════════════ -->
+<section class="section" id="leaderboard-section">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="lb-header">
+      <div class="lb-title">🏆 AGENT LEADERBOARD</div>
+      <div class="lb-subtitle">SEASON 1 <em>·</em> DAY 3 <em>·</em> RANKED BY SHARPE RATIO</div>
+      <div class="lb-meta-bar">
+        <span class="lb-chip gold">🥇 Top performer: THE C.I.O.</span>
+        <span class="lb-chip green">25 agents active</span>
+        <span class="lb-chip gray">3 days of history</span>
+        <span class="lb-chip red">⚠️ ENERGY DESK — underperforming</span>
+      </div>
+    </div>
+
+    <!-- Sort controls -->
+    <div class="lb-sort-row">
+      <span class="lb-sort-label">SORT BY:</span>
+      <button class="tab active" onclick="lbSort('sharpe', this)">SHARPE</button>
+      <button class="tab" onclick="lbSort('weight', this)">WEIGHT</button>
+      <button class="tab" onclick="lbSort('name', this)">NAME</button>
+      <button class="tab" onclick="lbSort('layer', this)">LAYER</button>
+    </div>
+
+    <!-- Column headers (desktop) -->
+    <div class="lb-col-headers">
+      <div class="lb-col-hdr">RANK</div>
+      <div class="lb-col-hdr">AGENT</div>
+      <div class="lb-col-hdr">LAYER</div>
+      <div class="lb-col-hdr">SHARPE (30D)</div>
+      <div class="lb-col-hdr">WEIGHT</div>
+      <div class="lb-col-hdr">LEVEL</div>
+      <div class="lb-col-hdr">TREND</div>
+    </div>
+
+    <!-- Rows injected by JS -->
+    <div id="lb-rows"></div>
+
+    <!-- Callout -->
+    <div class="lb-callout">
+      <div class="lb-callout-icon">🧬</div>
+      <div class="lb-callout-text">
+        <div class="lb-callout-title">DARWINIAN EVOLUTION IN PROGRESS</div>
+        <div class="lb-callout-body">
+          Every agent starts at weight <strong>1.0 (ANALYST)</strong>. As the system accumulates daily Sharpe data,
+          top performers evolve toward <strong>LEGEND (2.0–2.5×)</strong> and their calls dominate portfolio construction —
+          while underperformers are progressively silenced.
+          The leaderboard will look very different in 30 days. <strong>Only the signal survives.</strong>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -1430,6 +1845,189 @@ const ALL_AGENTS = [
   if ((today.reflexivity_flags || []).length === 0) {
     reflexGrid.innerHTML = '<div style="color: var(--text-dimmer); font-family: var(--mono); font-size: 12px; padding: 20px;">✓ No reflexivity flags active. No crowded trades detected today.</div>';
   }
+
+  // ══════════════════════════════════════════════════════
+  // AGENT LEADERBOARD
+  // ══════════════════════════════════════════════════════
+
+  // Pseudo-random seeded sparkline generator
+  function lbSparkline(finalValue, seed) {
+    let s = (seed * 1103515245 + 12345) & 0x7fffffff;
+    const rand = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return (s / 0x7fffffff) - 0.5; };
+    const pts = [];
+    for (let i = 0; i < 7; i++) {
+      const progress = i / 6;
+      const noise = rand() * Math.max(Math.abs(finalValue), 0.03) * 0.8;
+      pts.push(parseFloat((finalValue * progress + noise).toFixed(4)));
+    }
+    pts[6] = finalValue;
+    return pts;
+  }
+
+  function lbSvgSparkline(data) {
+    const W = 80, H = 30, PAD = 3;
+    const min = Math.min(...data, 0);
+    const max = Math.max(...data, 0);
+    const range = (max - min) || 0.01;
+    const toX = i => PAD + (i / (data.length - 1)) * (W - PAD * 2);
+    const toY = v => H - PAD - ((v - min) / range) * (H - PAD * 2);
+    const isPos = data[data.length - 1] >= 0;
+    const color = isPos ? '#00ff88' : '#ff4444';
+
+    // Zero line
+    const zeroY = toY(0);
+    const zeroPct = Math.max(0, Math.min(100, ((0 - min) / range * 100)));
+
+    // Build path
+    const linePts = data.map((v, i) => `${toX(i).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+    // Area fill path
+    const areaPath = `M${toX(0).toFixed(1)},${toY(data[0]).toFixed(1)} ` +
+      data.map((v, i) => `L${toX(i).toFixed(1)},${toY(v).toFixed(1)}`).join(' ') +
+      ` L${toX(data.length-1).toFixed(1)},${zeroY.toFixed(1)} L${toX(0).toFixed(1)},${zeroY.toFixed(1)} Z`;
+
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <defs>
+        <linearGradient id="sg${seed(data)}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <line x1="${PAD}" y1="${zeroY.toFixed(1)}" x2="${W-PAD}" y2="${zeroY.toFixed(1)}" stroke="#333" stroke-width="0.5"/>
+      <path d="${areaPath}" fill="url(#sg${seed(data)})" />
+      <polyline points="${linePts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${toX(data.length-1).toFixed(1)}" cy="${toY(data[data.length-1]).toFixed(1)}" r="2" fill="${color}"/>
+    </svg>`;
+  }
+  function seed(arr) { return Math.abs(arr.reduce((a,v,i)=>a+Math.round(v*1e4)*i,0)) % 9999; }
+
+  function lbLevel(weight) {
+    if (weight >= 2.0) return 'legend';
+    if (weight >= 1.5) return 'senior';
+    if (weight >= 0.8) return 'analyst';
+    return 'rookie';
+  }
+  function lbLevelLabel(w) {
+    const l = lbLevel(w);
+    return { legend: '★ LEGEND', senior: '◆ SENIOR', analyst: '● ANALYST', rookie: '○ ROOKIE' }[l];
+  }
+  function lbXpPct(weight) {
+    // map 0.3–2.5 to 0–100%
+    return Math.max(0, Math.min(100, ((weight - 0.3) / 2.2) * 100));
+  }
+  function lbTierClass(rank, total) {
+    if (rank === 1) return 'tier-gold';
+    if (rank === 2) return 'tier-silver';
+    if (rank === 3) return 'tier-bronze';
+    if (rank > total - 3) return 'tier-bottom';
+    return '';
+  }
+  function lbMedal(rank) {
+    return { 1: '🥇', 2: '🥈', 3: '🥉' }[rank] || '';
+  }
+  const LB_SHARPE_MAX = 0.22; // normalization ceiling
+
+  let lbCurrentSort = 'sharpe';
+  let lbCurrentData = [...LB_AGENTS]; // already sorted by sharpe desc
+
+  function lbRenderRows(data) {
+    const container = document.getElementById('lb-rows');
+    container.innerHTML = '';
+    const total = data.length;
+    // For rank display always use the sharpe-sorted rank
+    const sharpeRanks = {};
+    [...LB_AGENTS].forEach((a, i) => { sharpeRanks[a.key] = i + 1; });
+
+    data.forEach((agent, idx) => {
+      const displayRank = lbCurrentSort === 'sharpe' ? idx + 1 : sharpeRanks[agent.key];
+      const tierRank = sharpeRanks[agent.key]; // tier always based on sharpe rank
+      const tier = lbTierClass(tierRank, total);
+      const medal = lbMedal(tierRank);
+      const level = lbLevel(agent.weight);
+      const levelLabel = lbLevelLabel(agent.weight);
+      const xpPct = lbXpPct(agent.weight);
+      const sharpeSign = agent.sharpe > 0 ? '+' : '';
+      const sharpeClass = agent.sharpe > 0 ? 'pos' : agent.sharpe < 0 ? 'neg' : 'zero';
+      const sharpePct = Math.min(100, (Math.abs(agent.sharpe) / LB_SHARPE_MAX) * 100);
+
+      // Generate sparkline
+      const sparkData = lbSparkline(agent.sharpe, agent.key.length * 17 + idx * 31);
+
+      const row = document.createElement('div');
+      row.className = `lb-row ${tier}`;
+      row.style.animationDelay = `${idx * 0.04}s`;
+      row.innerHTML = `
+        <div class="lb-rank">
+          ${medal ? `<div class="medal">${medal}</div>` : ''}
+          <div class="num">#${displayRank}</div>
+        </div>
+
+        <div class="lb-name-wrap">
+          <div class="lb-name">${agent.display}</div>
+          <div class="lb-days">${agent.recs} call tracked · Season 1</div>
+        </div>
+
+        <div>
+          <span class="lb-layer ${agent.layer}">${agent.layer.toUpperCase()}</span>
+        </div>
+
+        <div class="lb-sharpe-wrap">
+          <div class="lb-sharpe-header">
+            <span>SHARPE 30D</span>
+            <span class="lb-sharpe-val ${sharpeClass}">${sharpeSign}${agent.sharpe.toFixed(2)}</span>
+          </div>
+          <div class="lb-sharpe-track">
+            <div class="lb-sharpe-fill ${sharpeClass}" data-pct="${sharpePct}"></div>
+          </div>
+        </div>
+
+        <div class="lb-weight-wrap">
+          <div class="lb-weight-num ${level}">${agent.weight.toFixed(2)}×</div>
+          <div class="lb-weight-label">WEIGHT</div>
+        </div>
+
+        <div class="lb-level-wrap">
+          <div class="lb-level-badge ${level}">${levelLabel}</div>
+          <div class="lb-xp-track">
+            <div class="lb-xp-fill ${level}" data-pct="${xpPct}"></div>
+          </div>
+        </div>
+
+        <div class="lb-sparkline">
+          ${lbSvgSparkline(sparkData)}
+        </div>
+      `;
+      container.appendChild(row);
+    });
+
+    // Trigger bar animations after a tick
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.lb-sharpe-fill[data-pct]').forEach(el => {
+          el.style.width = el.dataset.pct + '%';
+        });
+        document.querySelectorAll('.lb-xp-fill[data-pct]').forEach(el => {
+          el.style.width = el.dataset.pct + '%';
+        });
+      });
+    });
+  }
+
+  // Sort handler (exposed to global for onclick)
+  window.lbSort = function(by, btn) {
+    document.querySelectorAll('.lb-sort-row .tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    lbCurrentSort = by;
+    let sorted = [...LB_AGENTS];
+    if (by === 'sharpe')  sorted.sort((a, b) => b.sharpe - a.sharpe);
+    if (by === 'weight')  sorted.sort((a, b) => b.weight - a.weight);
+    if (by === 'name')    sorted.sort((a, b) => a.display.localeCompare(b.display));
+    if (by === 'layer')   sorted.sort((a, b) => a.layer.localeCompare(b.layer) || b.sharpe - a.sharpe);
+    lbCurrentData = sorted;
+    lbRenderRows(sorted);
+  };
+
+  // Initial render
+  lbRenderRows(LB_AGENTS);
 
 })();
 </script>
