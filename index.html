@@ -1617,42 +1617,43 @@ section{margin-bottom:32px}
 const PORTFOLIO_DATA = {
   starting_capital: 50000,
   inception_date: "2026-03-24",
-  current_equity: 50298,
+  current_equity: 50271,
   target_go_live_days: 90,
 
   equity_history: [
     { date: "2026-03-24", equity: 50000, spx: 6556.37, daily_pnl: 0 },
     { date: "2026-03-25", equity: 50143, spx: 6591.90, daily_pnl: 143 },
-    { date: "2026-03-26", equity: 50298, spx: 6610.00, daily_pnl: 155 }
+    { date: "2026-03-26", equity: 50298, spx: 6610.00, daily_pnl: 155 },
+    { date: "2026-03-27", equity: 50271, spx: 6368.85, daily_pnl: -27 }
   ],
 
   positions: [
-    { ticker: "LMT",  dir: "LONG",  entry: 620.00, current: 624.20, shares: 5.8,  conviction: 72, stopLoss: 570.40 },
-    { ticker: "RTX",  dir: "LONG",  entry: 194.00, current: 197.00, shares: 18.6, conviction: 72, stopLoss: 178.48 },
-    { ticker: "LNG",  dir: "LONG",  entry: 285.00, current: 282.00, shares: 11.9, conviction: 68, stopLoss: 262.20 },
-    { ticker: "VRTX", dir: "LONG",  entry: 428.00, current: 432.00, shares: 7.6,  conviction: 65, stopLoss: 393.76 },
-    { ticker: "NVDA", dir: "LONG",  entry: 177.00, current: 178.68, shares: 19.2, conviction: 68, stopLoss: 162.84 },
-    { ticker: "UAL",  dir: "SHORT", entry: 85.00,  current: 87.50,  shares: 34.1, conviction: 58, stopLoss: 91.80  }
+    { ticker: "LMT",  dir: "LONG",  entry: 620.00, current: 615.84, shares: 5.8,  conviction: 72, stopLoss: 570.40 },
+    { ticker: "RTX",  dir: "LONG",  entry: 194.00, current: 200.00, shares: 18.6, conviction: 72, stopLoss: 178.48 },
+    { ticker: "LNG",  dir: "LONG",  entry: 285.00, current: 285.00, shares: 11.9, conviction: 68, stopLoss: 262.20 },
+    { ticker: "VRTX", dir: "LONG",  entry: 428.00, current: 455.00, shares: 7.6,  conviction: 78, stopLoss: 393.76 },
+    { ticker: "NVDA", dir: "LONG",  entry: 177.00, current: 167.52, shares: 19.2, conviction: 55, stopLoss: 162.84 },
+    { ticker: "UAL",  dir: "SHORT", entry: 85.00,  current: 83.00,  shares: 34.1, conviction: 70, stopLoss: 91.80  }
   ],
 
   metrics: {
-    total_return_pct: 0.60,
-    sharpe: 0.42,
-    max_drawdown_pct: 0.0,
-    win_rate: 0.80,
-    alpha_vs_spx_pct: -0.22,
-    trading_days: 3,
+    total_return_pct: 0.54,
+    sharpe: 0.44,
+    max_drawdown_pct: 0.054,
+    win_rate: 0.50,
+    alpha_vs_spx_pct: 3.40,
+    trading_days: 4,
     stop_loss_violations: 0,
     autoresearch_cycles: 0,
-    benchmark_return_pct: 0.82
+    benchmark_return_pct: -2.86
   },
 
   go_live_criteria: [
-    { name: "Trading Days",              current: 3,    target: 90,  unit: "days",       met: false },
-    { name: "Sharpe Ratio (Ann.)",       current: 0.42, target: 1.5, unit: "",           met: false },
-    { name: "Max Drawdown",              current: 0.0,  target: 15,  unit: "%",          met: true,  inverse: true },
-    { name: "Win Rate",                  current: 80,   target: 55,  unit: "%",          met: true },
-    { name: "Alpha vs SPX",             current: -0.22,target: 5,   unit: "%",          met: false },
+    { name: "Trading Days",              current: 4,    target: 90,  unit: "days",       met: false },
+    { name: "Sharpe Ratio (Ann.)",       current: 0.44, target: 1.5, unit: "",           met: false },
+    { name: "Max Drawdown",              current: 0.054,target: 15,  unit: "%",          met: true,  inverse: true },
+    { name: "Win Rate",                  current: 50,   target: 55,  unit: "%",          met: false },
+    { name: "Alpha vs SPX",             current: 3.40, target: 5,   unit: "%",          met: false },
     { name: "Stat. Significance (p<0.05)",current:0,    target: 100, unit: "%",          met: false },
     { name: "Stop Loss Discipline",      current: 0,    target: 0,   unit: "violations", met: true,  inverse: true },
     { name: "Autoresearch Cycles",       current: 0,    target: 5,   unit: "cycles",     met: false }
