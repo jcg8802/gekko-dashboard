@@ -1617,7 +1617,7 @@ section{margin-bottom:32px}
 const PORTFOLIO_DATA = {
   starting_capital: 50000,
   inception_date: "2026-03-24",
-  current_equity: 50475,
+  current_equity: 50649,
   target_go_live_days: 90,
 
   equity_history: [
@@ -1629,25 +1629,26 @@ const PORTFOLIO_DATA = {
     { date: "2026-03-31", equity: 50584,  spx: 6444.00, daily_pnl: 154 },
     { date: "2026-04-01", equity: 50071,  spx: 6580.00, daily_pnl: -513 },
     { date: "2026-04-02", equity: 50614,  spx: 6445.00, daily_pnl: 543 },
-    { date: "2026-04-06", equity: 50475,  spx: 6582.69, daily_pnl: -139 }
+    { date: "2026-04-06", equity: 50475,  spx: 6582.69, daily_pnl: -139 },
+    { date: "2026-04-07", equity: 50649,  spx: 6616.85, daily_pnl: 174 }
   ],
 
   positions: [
-    { ticker: "LMT",  dir: "LONG",  entry: 620.00, current: 621.00, shares: 5.8,  conviction: 55, stopLoss: 570.40 },
-    { ticker: "RTX",  dir: "LONG",  entry: 194.00, current: 191.00, shares: 18.6, conviction: 60, stopLoss: 178.48 },
-    { ticker: "LNG",  dir: "LONG",  entry: 285.00, current: 281.00, shares: 11.9, conviction: 74, stopLoss: 262.20 },
-    { ticker: "VRTX", dir: "LONG",  entry: 428.00, current: 443.00, shares: 7.6,  conviction: 78, stopLoss: 393.76 },
-    { ticker: "NVDA", dir: "LONG",  entry: 177.00, current: 178.00, shares: 19.2, conviction: 65, stopLoss: 165.00 },
+    { ticker: "LMT",  dir: "LONG",  entry: 620.00, current: 637.90, shares: 5.8,  conviction: 55, stopLoss: 570.40 },
+    { ticker: "RTX",  dir: "LONG",  entry: 194.00, current: 197.00, shares: 18.6, conviction: 55, stopLoss: 178.48 },
+    { ticker: "LNG",  dir: "LONG",  entry: 285.00, current: 274.00, shares: 11.9, conviction: 70, stopLoss: 262.20 },
+    { ticker: "VRTX", dir: "LONG",  entry: 428.00, current: 449.00, shares: 7.6,  conviction: 74, stopLoss: 393.76 },
+    { ticker: "NVDA", dir: "LONG",  entry: 177.00, current: 178.10, shares: 19.2, conviction: 72, stopLoss: 165.00 },
     { ticker: "GLD",  dir: "LONG",  entry: 0.00,   current: 0.00,   shares: 0,    conviction: 72, stopLoss: 0 }
   ],
 
   metrics: {
-    total_return_pct: 0.95,
-    sharpe: -0.52,
+    total_return_pct: 1.30,
+    sharpe: -0.38,
     max_drawdown_pct: 1.21,
     win_rate: 0.60,
     alpha_vs_spx_pct: 0.55,
-    trading_days: 8,
+    trading_days: 9,
     stop_loss_violations: 0,
     autoresearch_cycles: 0,
     benchmark_return_pct: 0.40
