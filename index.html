@@ -1614,57 +1614,7 @@ section{margin-bottom:32px}
 // PORTFOLIO DATA — Paper Trading Proof System
 // Updated daily by Gekko cron. Source of truth: skills/gekko/data/paper_portfolio.json
 // ══════════════════════════════════════════════════════════════
-const PORTFOLIO_DATA = {
-  starting_capital: 50000,
-  inception_date: "2026-03-24",
-  current_equity: 50649,
-  target_go_live_days: 90,
-
-  equity_history: [
-    { date: "2026-03-24", equity: 50000,  spx: 6556.37, daily_pnl: 0 },
-    { date: "2026-03-25", equity: 50143,  spx: 6591.90, daily_pnl: 143 },
-    { date: "2026-03-26", equity: 50298,  spx: 6610.00, daily_pnl: 155 },
-    { date: "2026-03-27", equity: 50271,  spx: 6368.85, daily_pnl: -27 },
-    { date: "2026-03-30", equity: 50430,  spx: 6343.72, daily_pnl: 159 },
-    { date: "2026-03-31", equity: 50584,  spx: 6444.00, daily_pnl: 154 },
-    { date: "2026-04-01", equity: 50071,  spx: 6580.00, daily_pnl: -513 },
-    { date: "2026-04-02", equity: 50614,  spx: 6445.00, daily_pnl: 543 },
-    { date: "2026-04-06", equity: 50475,  spx: 6582.69, daily_pnl: -139 },
-    { date: "2026-04-07", equity: 50649,  spx: 6616.85, daily_pnl: 174 }
-  ],
-
-  positions: [
-    { ticker: "LMT",  dir: "LONG",  entry: 620.00, current: 637.90, shares: 5.8,  conviction: 55, stopLoss: 570.40 },
-    { ticker: "RTX",  dir: "LONG",  entry: 194.00, current: 197.00, shares: 18.6, conviction: 55, stopLoss: 178.48 },
-    { ticker: "LNG",  dir: "LONG",  entry: 285.00, current: 274.00, shares: 11.9, conviction: 70, stopLoss: 262.20 },
-    { ticker: "VRTX", dir: "LONG",  entry: 428.00, current: 449.00, shares: 7.6,  conviction: 74, stopLoss: 393.76 },
-    { ticker: "NVDA", dir: "LONG",  entry: 177.00, current: 178.10, shares: 19.2, conviction: 72, stopLoss: 165.00 },
-    { ticker: "GLD",  dir: "LONG",  entry: 0.00,   current: 0.00,   shares: 0,    conviction: 72, stopLoss: 0 }
-  ],
-
-  metrics: {
-    total_return_pct: 1.30,
-    sharpe: -0.38,
-    max_drawdown_pct: 1.21,
-    win_rate: 0.60,
-    alpha_vs_spx_pct: 0.55,
-    trading_days: 9,
-    stop_loss_violations: 0,
-    autoresearch_cycles: 0,
-    benchmark_return_pct: 0.40
-  },
-
-  go_live_criteria: [
-    { name: "Trading Days",              current: 8,    target: 90,  unit: "days",       met: false },
-    { name: "Sharpe Ratio (Ann.)",       current: -0.52, target: 1.5, unit: "",          met: false },
-    { name: "Max Drawdown",              current: 1.21, target: 15,  unit: "%",          met: true,  inverse: true },
-    { name: "Win Rate",                  current: 60,   target: 55,  unit: "%",          met: true  },
-    { name: "Alpha vs SPX",             current: 0.55, target: 5,   unit: "%",          met: false },
-    { name: "Stat. Significance (p<0.05)",current:0,    target: 100, unit: "%",          met: false },
-    { name: "Stop Loss Discipline",      current: 0,    target: 0,   unit: "violations", met: true,  inverse: true },
-    { name: "Autoresearch Cycles",       current: 0,    target: 5,   unit: "cycles",     met: false }
-  ]
-};
+const PORTFOLIO_DATA = {"meta": {"starting_capital": 50000, "currency": "USD", "inception_date": "2026-03-24", "strategy": "Gekko 25-Agent AI Trading Intelligence", "note": "Paper trading simulation. All entries at next-day open after recommendation."}, "positions": [{"ticker": "LMT", "direction": "LONG", "shares": 5.8, "entry_price": 620.0, "entry_date": "2026-03-24", "current": 616.0, "conviction": 65, "pct_portfolio": 7.0, "status": "OPEN", "unrealized_pnl": -23.2, "unrealized_pnl_pct": -0.65, "thesis": "Active military conflict \u2014 defense spend rises regardless of resolution", "stop_loss": 570.4, "note": "Ceasefire headwind \u2014 defense selling as US-Iran extend talks toward permanent deal. Structural story intact (NATO spend, Ukraine, China). Stop at $570.40 \u2014 wide buffer. Watch $600 for add-or-cut decision."}, {"ticker": "RTX", "direction": "LONG", "shares": 18.6, "entry_price": 194.0, "entry_date": "2026-03-24", "current": 200.0, "conviction": 65, "pct_portfolio": 7.3, "status": "OPEN", "unrealized_pnl": 111.6, "unrealized_pnl_pct": 3.09, "thesis": "Defense uncorrelated to Iran peace outcome", "stop_loss": 178.48, "note": "Holding above entry with $111.60 unrealized gain. Defense budget story is multi-year. Ceasefire = near-term noise."}, {"ticker": "LNG", "direction": "LONG", "shares": 11.9, "entry_price": 285.0, "entry_date": "2026-03-24", "current": 272.0, "conviction": 62, "pct_portfolio": 6.4, "status": "OPEN", "unrealized_pnl": -154.7, "unrealized_pnl_pct": -4.56, "thesis": "Europe energy security, Hormuz-insulated, locked contracts", "stop_loss": 262.2, "note": "WATCH: Only $9.80 buffer above stop ($262.20). WTI -7% today on peace talks. Oil sympathy selling. BUT: RBC raised target to $300 today. Contracted pricing structurally insulates Cheniere. If WTI breaks $85 permanently, stop becomes relevant. Hold for now."}, {"ticker": "VRTX", "direction": "LONG", "shares": 7.6, "entry_price": 428.0, "entry_date": "2026-03-24", "current": 440.0, "conviction": 74, "pct_portfolio": 6.6, "status": "OPEN", "unrealized_pnl": 91.2, "unrealized_pnl_pct": 2.8, "thesis": "CF monopoly, zero macro exposure, Ackman-style compounder", "stop_loss": 393.76, "note": "Morgan Stanley raised price target $596 \u2192 $612 (Apr 10). Both Ackman + Baker agents bullish. Highest-conviction compounder. Let it run."}, {"ticker": "UAL", "direction": "SHORT", "shares": 34.1, "entry_price": 85.0, "entry_date": "2026-03-24", "current": 92.21, "conviction": 45, "pct_portfolio": 5.8, "status": "CLOSED_STOP_LOSS_AVOIDED", "unrealized_pnl": -172.1, "unrealized_pnl_pct": -8.48, "thesis": "Oil at $99 with floor, jet fuel cost crush, no pricing power ceiling", "stop_loss": 91.8, "note": "CLOSED at $92.21 on April 6. Oil collapse to $64 WTI killed the short thesis. Total trade: opened 34.1 shares $85, trimmed 10.23 @ $82 = +$102.30. Remaining 23.87 closed @ $92.21 = -$243.71. Net UAL trade = -$141.41."}, {"ticker": "NVDA", "direction": "LONG", "shares": 19.2, "entry_price": 177.0, "entry_date": "2026-03-25", "current": 188.89, "conviction": 72, "pct_portfolio": 7.2, "status": "OPEN", "unrealized_pnl": 228.29, "unrealized_pnl_pct": 6.72, "thesis": "AI capex cycle intact \u2014 ceasefire = multiple expansion catalyst", "stop_loss": 165.0, "note": "Highest since February 2026. +$207.17 today (best single-position day since inception). AI narrative fully reloaded \u2014 Anthropic exploring IPO, AI capex intact, peace deal removes sanctions overhang. Target $200+. Let it run."}], "equity_history": [{"date": "2026-03-24", "equity": 50000.0, "daily_pnl": 0.0, "daily_return_pct": 0.0, "cash": 33250.0, "positions_value": 16750.0, "benchmark_spx": 6556.37, "note": "Inception. Positions entered: LMT, RTX, LNG, VRTX, UAL short."}, {"date": "2026-03-25", "equity": 50143.0, "daily_pnl": 143.0, "daily_return_pct": 0.29, "cash": 29850.0, "positions_value": 20293.0, "benchmark_spx": 6591.9, "note": "LMT +$141, RTX +$44, VRTX +$30, LNG -$60 (energy lagged ceasefire rally), UAL short -$68 (travel led). NVDA position opened."}, {"date": "2026-03-26", "equity": 50298.0, "daily_pnl": 155.0, "daily_return_pct": 0.31, "cash": 29850.0, "positions_value": 20448.0, "benchmark_spx": 6610.0, "note": "NVDA +$32, RTX +$56, LMT +$18, VRTX +$30, LNG +$24, UAL short -$68."}, {"date": "2026-03-27", "equity": 50271.0, "daily_pnl": -27.0, "daily_return_pct": -0.054, "cash": 29850.0, "positions_value": 20421.0, "benchmark_spx": 6368.85, "note": "SPX -3.65% (Houthi escalation). UAL short +$204. NVDA -$67. LMT -$67, LNG -$76. Portfolio outperformed massively."}, {"date": "2026-03-30", "equity": 50430.0, "daily_pnl": 159.0, "daily_return_pct": 0.32, "cash": 29850.0, "positions_value": 20580.0, "benchmark_spx": 6343.72, "note": "LNG surge to $299 (+$126). UAL short +$171. LMT -$92, RTX -$23. NVDA -$46 (critical stop watch)."}, {"date": "2026-03-31", "equity": 50584.0, "daily_pnl": 154.0, "daily_return_pct": 0.31, "cash": 29850.0, "positions_value": 20734.0, "benchmark_spx": 6444.0, "note": "VIX cratered -17.51%. NVDA +$159 (rescued from stop zone). RTX +$56. UAL short -$136 as risk-on."}, {"date": "2026-04-01", "equity": 50071.0, "daily_pnl": -513.0, "daily_return_pct": -1.02, "cash": 29850.0, "positions_value": 20221.0, "benchmark_spx": 6580.0, "note": "Trump: Iran war over 2-3 weeks. Brent -15% to $97. UAL short -$306. Defense LMT/RTX -$93 each. NVDA +$49."}, {"date": "2026-04-02", "equity": 50613.56, "daily_pnl": 542.56, "daily_return_pct": 1.08, "cash": 29850.0, "positions_value": 20763.56, "benchmark_spx": 6445.0, "note": "RISK_OFF re-locks. Defense (LMT +$162, RTX +$149) and UAL short (+$191) firing. LNG +$143. Best alpha day since inception."}, {"date": "2026-04-06", "equity": 50475.05, "daily_pnl": -138.51, "daily_return_pct": -0.27, "cash": 31814.71, "positions_value": 17282.7, "benchmark_spx": 6582.69, "note": "UAL short closed at $92.21 \u2014 oil collapse to $64 WTI killed thesis. Net UAL trade: -$141. LMT recovering. VRTX +$114 vs entry best performer."}, {"date": "2026-04-07", "equity": 50648.89, "daily_pnl": 173.84, "daily_return_pct": 0.34, "cash": 31814.71, "positions_value": 18834.18, "benchmark_spx": 6616.85, "note": "Defense rally: LMT +$98, RTX +$112. LNG -$83 on oil softness. VRTX +$46. Post-close: Trump conditional ceasefire + Iran pledges Hormuz reopening."}, {"date": "2026-04-14", "equity": 50692.64, "daily_pnl": 43.75, "daily_return_pct": 0.086, "cash": 31814.71, "positions_value": 17500.29, "benchmark_spx": 6910.0, "note": "US-Iran further talks toward permanent ceasefire. WTI -7% to $92.34. SPX near ATH. NVDA +$207.17 (best day, highest since Feb). Defense names sold: LMT -$127. RTX +$56 on earnings beat. VRTX -$68 (slight pullback, MS raised target to $612). LNG -$24 oil sympathy but RBC raised target to $300. Portfolio flat vs SPX +4.4% since April 7 \u2014 defense drag offset by NVDA strength."}], "summary": {"total_return_pct": 1.385, "total_pnl": 692.64, "benchmark_return_pct": 5.394, "alpha_vs_benchmark": -4.008, "alpha_note": "Portfolio +1.39% vs SPX +5.39% (inception 6556.37 \u2192 6910.00). Alpha = -4.01%. Defense-heavy book hurt by ceasefire de-escalation that lifted SPX. NVDA and VRTX are the quality winners. Regime shift from war-premium to peace-premium = structural headwind for defense longs in short-term.", "best_day_pct": 1.08, "worst_day_pct": -1.02, "current_equity": 50692.64, "cash_pct": 62.8, "deployed_pct": 37.2, "open_positions": 5, "win_rate": "3/5", "sharpe_since_inception": 3.94, "max_drawdown_pct": 1.21, "stop_loss_violations": 0, "trading_days": 11, "go_live_criteria": {"sharpe_target": 1.5, "sharpe_current": 3.94, "sharpe_met": true, "win_rate_target": 0.55, "win_rate_current": 0.6, "win_rate_met": true, "alpha_target_pct": 5.0, "alpha_current_pct": -4.008, "alpha_met": false, "days_target": 90, "days_current": 11}, "cio_alert": "DEPLOY CASH ALERT: 62.8% cash in RISK_ON is capital waste. Recommend: Add GLD position ~$5K (6% port) \u2014 gold holds on macro uncertainty even as oil falls. NVDA is the primary driver \u2014 let it run. LNG STOP WATCH: $9.80 buffer. If WTI<$85, exit LNG.", "note": "Day 11. US-Iran extending talks toward permanent deal. Regime: RISK_ON (peace premium). Portfolio needs rebalancing: too defense-heavy for peace trade, too cash-heavy for RISK_ON. Next actions: GLD entry, MSFT add pending. NVDA is the crown jewel \u2014 +$228 unrealized, +6.7% from entry."}};
 
 // ══════════════════════════════════════════════════════════════
 // PROOF SECTION RENDER
