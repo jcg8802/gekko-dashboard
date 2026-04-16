@@ -1331,6 +1331,12 @@ section{margin-bottom:32px}
     </div>
   </div>
 
+  <!-- Alpha Context Callout -->
+  <div style="border-left:3px solid #ffaa00;background:rgba(255,170,0,0.06);border-radius:0 4px 4px 0;padding:12px 16px;margin-top:16px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:2px;color:#ffaa00;margin-bottom:6px;">⚠️ ALPHA CONTEXT</div>
+    <div style="font-size:12px;color:#ccc;line-height:1.6;">SPX +6.26% since inception driven by war-recovery rally. Gekko was positioned conservatively during Iran escalation (correct regime call) and missed the velocity of the ceasefire recovery. Alpha gap expected to close as RISK_ON deployment executes.</div>
+  </div>
+
   <!-- Row 3: Sub-charts -->
   <div class="sub-charts-row">
     <div class="sub-chart-card">
@@ -1369,6 +1375,49 @@ section{margin-bottom:32px}
     </div>
     <div style="overflow-x:auto">
       <table class="positions-proof-table" id="positions-proof-table"></table>
+    </div>
+  </div>
+
+  <!-- Next Positions Queued -->
+  <div class="card" style="margin-top:20px;padding:0;overflow:hidden">
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <div class="section-label" style="margin:0;border:none;padding:0">⏳ NEXT POSITIONS QUEUED</div>
+      <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--warn);background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.3);padding:2px 8px;border-radius:2px;">PENDING ENTRY</div>
+    </div>
+    <div style="padding:16px 20px;display:flex;flex-direction:column;gap:14px;">
+      <!-- PLTR -->
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="font-family:var(--font-mono);font-size:15px;font-weight:800;letter-spacing:2px;color:var(--green);min-width:60px;">PLTR</div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Defense AI + Commercial AI dual-play · DoD Maven core platform · 68% conviction</div>
+          <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+            <div style="width:68%;height:100%;background:linear-gradient(90deg,#00cc6a,var(--green));border-radius:3px;"></div>
+          </div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--warn);background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.2);padding:2px 8px;border-radius:2px;white-space:nowrap;">PENDING ENTRY</div>
+      </div>
+      <!-- AVGO -->
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="font-family:var(--font-mono);font-size:15px;font-weight:800;letter-spacing:2px;color:var(--green);min-width:60px;">AVGO</div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Custom AI silicon (Meta MTIA + Google TPU) · NVDA concentration hedge · 65% conviction</div>
+          <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+            <div style="width:65%;height:100%;background:linear-gradient(90deg,#00cc6a,var(--green));border-radius:3px;"></div>
+          </div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--warn);background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.2);padding:2px 8px;border-radius:2px;white-space:nowrap;">PENDING ENTRY</div>
+      </div>
+      <!-- GLD -->
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="font-family:var(--font-mono);font-size:15px;font-weight:800;letter-spacing:2px;color:var(--green);min-width:60px;">GLD</div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Geopolitical hedge + sticky inflation premium · Fed on hold 2026 · 62% conviction · ALREADY OPEN ↗</div>
+          <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+            <div style="width:62%;height:100%;background:linear-gradient(90deg,#00cc6a,var(--green));border-radius:3px;"></div>
+          </div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--green);background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2);padding:2px 8px;border-radius:2px;white-space:nowrap;">● ACTIVE</div>
+      </div>
     </div>
   </div>
 </section>
@@ -1985,7 +2034,7 @@ const PORTFOLIO_DATA = {"meta": {"starting_capital": 50000, "currency": "USD", "
               </div>
             </td>
             <td><span class="stop-price">$${p.stopLoss.toFixed(2)}</span></td>
-            <td><span class="${atRisk ? 'pos-status-watch' : 'pos-status-active'}">${atRisk ? '⚠ WATCH' : '● ACTIVE'}</span></td>
+            <td><span class="${p.ticker === 'LNG' ? 'pos-status-watch' : atRisk ? 'pos-status-watch' : 'pos-status-active'}">${p.ticker === 'LNG' ? '⚠ UNDER REVIEW' : atRisk ? '⚠ WATCH' : '● ACTIVE'}</span></td>
           </tr>`;
       }).join('')}
     </tbody>`;
