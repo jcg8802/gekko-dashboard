@@ -1712,10 +1712,10 @@ const PORTFOLIO_DATA = {"meta": {"starting_capital": 50000, "currency": "USD", "
   const eqDates  = pd.equity_history.map(d => d.date.slice(5)); // "MM-DD"
   const eqGekko  = pd.equity_history.map(d => d.equity);
   // Index both to 100 at inception
-  const spxStart = pd.equity_history[0].spx;
+  const spxStart = pd.equity_history[0].benchmark_spx;
   const eqStart  = pd.equity_history[0].equity;
   const eqGekkoIdx = eqGekko.map(v => ((v / eqStart) * 100));
-  const eqSpxIdx   = pd.equity_history.map(d => ((d.spx / spxStart) * 100));
+  const eqSpxIdx   = pd.equity_history.map(d => ((d.benchmark_spx / spxStart) * 100));
 
   const equityCtx = document.getElementById('equityChart').getContext('2d');
   const greenGrad = equityCtx.createLinearGradient(0, 0, 0, 260);
